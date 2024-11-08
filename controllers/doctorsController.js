@@ -1,11 +1,61 @@
 const Doctor = require('../models/doctorsModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Token = require('../models/tokenmodel')
 const crypto = require('crypto');
+const OTP=require("../models/otpModel")
+const Token = require("../models/tokenmodel");
+const axios = require('axios');
+const {forgetPasswordDoctorSV,sendOtpSV} = require('../schemaValidator/doctorValidator');
+const { generateOTP } = require('../utils/sendOtp');
 
-const {forgetPasswordDoctorSV} = require('../schemaValidator/doctorValidator');
 
+
+
+
+const sendOtpDoctor = async (req, res) => {
+    try {
+      if (req.body.email) {
+        req.body.email = req.body.email.toLowerCase();
+      }
+      const validateReqBody = await sendOtpSV.validateAsync(req.body);
+      const { otpType, phone, email } = validateReqBody;
+      const otp = generateOTP();
+  
+      if (phone) {
+        const otpPayload = {
+          otpType,
+          phone,
+          otp,
+          appType: "Doctor", // Updated appType to differentiate for doctors
+        };
+        const phoneEntry = await OTP.create(otpPayload);
+        const response = await sendOtpViaSMS(phone, otp);
+        return res.status(response.success ? 200 : 500).json(response);
+      } else if (email) {
+        const otpPayload = {
+          otpType,
+          email,
+          otp,
+          appType: "Doctor", // Updated appType to differentiate for doctors
+        };
+        const emailEntry = await OTP.create(otpPayload);
+        const response = await sendOtpViaEmail(email, otp);
+        return res.status(response.success ? 200 : 500).json(response);
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "Phone number or email is required.",
+        });
+      }
+    } catch (err) {
+      console.log("Error in sending OTP to doctor:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+  
 // Doctor signup
 const signUpDoctor = async (req, res) => {
     try {
@@ -284,7 +334,8 @@ module.exports = {
     loginDoctor,
     forgetPasswordDoctor,
     changePasswordDoctor,
-    getAllDoctors
+    getAllDoctors,
+    sendOtpDoctor
   
   
 };
