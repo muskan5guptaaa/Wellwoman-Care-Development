@@ -40,6 +40,8 @@ const signUpDoctor = async (req, res) => {
         return res.status(500).json({ success: false, message: "Internal Server Error." });
     }
 };
+
+
 // Doctor login controller
 const loginDoctor = async (req, res) => {
     try {
@@ -78,23 +80,7 @@ const loginDoctor = async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        // Store token in the database
-    await Token.create({
-      token: token,
-      objectDocId: user._id,
-      userType: "User",
-      deviceType: deviceType,
-      expired_at: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
-    });
-
-    // Check if the token was saved
-    const savedToken = await Token.findOne({ token: token });
-    if (!savedToken) {
-      return res.status(500).json({
-        success: false,
-        message: "Token not saved in database",
-      });
-    }
+    
 
         // Store the generated token in the Token collection for session tracking
         await Token.create({
@@ -226,21 +212,16 @@ const forgetPasswordDoctor = async (req, res) => {
         endDate,
         page = 1,
         limit = 10,
+        licenseNumber,
         sortBy = "name",
         sortOrder = 1,
       } = req.query;
   
       const filter = {};
   
-      if (phone) {
-        filter.phone = { $regex: phone, $options: "i" };
-      }
-      if (name) {
-        filter.name = { $regex: name, $options: "i" };
-      }
-      if (email) {
-        filter.email = { $regex: email, $options: "i" };
-      }
+      if (phone) filter.phone = { $regex: phone, $options: "i" };
+      if (name) filter.name = { $regex: name, $options: "i" };
+      if (email) filter.email = { $regex: email, $options: "i" };
   
       if (startDate && endDate) {
         filter.createdAt = {
@@ -250,9 +231,7 @@ const forgetPasswordDoctor = async (req, res) => {
       }
   
       const doctors = await Doctor.aggregate([
-        {
-          $match: filter,
-        },
+        { $match: filter },
         {
           $project: {
             _id: 1,
@@ -263,14 +242,13 @@ const forgetPasswordDoctor = async (req, res) => {
             address: 1,
             city: 1,
             state: 1,
+            licenseNumber,
             country: 1,
             pincode: 1,
             createdAt: 1,
           },
         },
-        {
-          $sort: { [sortBy]: parseInt(sortOrder) },
-        },
+        { $sort: { [sortBy]: parseInt(sortOrder) } },
         {
           $facet: {
             data: [{ $skip: (page - 1) * limit }, { $limit: parseInt(limit) }],
@@ -280,7 +258,7 @@ const forgetPasswordDoctor = async (req, res) => {
       ]);
   
       const result = doctors[0] || {};
-      const totalItems = result.totalCount.length > 0 ? result.totalCount[0].total : 0;
+      const totalItems = result.totalCount?.[0]?.total || 0;
       const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
   
       return res.status(200).json({
@@ -293,6 +271,7 @@ const forgetPasswordDoctor = async (req, res) => {
       });
     } catch (error) {
       console.log("Error in fetching all doctors", error);
+      console.log("Filter object:", filter);
       return res.status(500).json({
         success: false,
         message: error?.message,
