@@ -5,7 +5,6 @@ const doctorKycSchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Doctor",
-    required: true,
   },
   fullName: {
     type: String,
@@ -21,12 +20,10 @@ const doctorKycSchema = new mongoose.Schema({
   },
   licenseNumber: {
     type: String,
-    required: true,
     unique: true,
   },
   licenseExpiryDate: {
-    type: Date,
-    required: true,
+    type: Date
   },
  documentType: {
         type: String,
@@ -38,8 +35,7 @@ const doctorKycSchema = new mongoose.Schema({
         required: true,
       },
  documentFileUrl: {
-        type: String,
-        required: true,
+        type: String
       },
   isKycVerified: {
     type: Boolean,

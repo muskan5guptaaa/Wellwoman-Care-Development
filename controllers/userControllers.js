@@ -451,7 +451,7 @@ const logout = async (req, res) => {
 };
 const getUserProfile = async (req, res) => {
   try {
-      const userId = req.user._id;  // Access the user ID from the authenticated user
+      const userId = req.user._id;
 
       // Aggregation pipeline to fetch user profile
       const userProfile = await User.aggregate([
@@ -477,7 +477,7 @@ const getUserProfile = async (req, res) => {
           return res.status(404).json({ message: "User profile not found" });
       }
 
-      // Check if healthMetrics exists and has the fields you're looking for
+      // Check if healthMetrics exists and has the fields 
       const profile = userProfile[0];
       if (profile.healthMetrics) {
           const { bloodPressure, heartRate, bodyTemperature, bloodGlucose } = profile.healthMetrics;

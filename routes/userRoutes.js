@@ -15,6 +15,7 @@ router.post("/user/logout",userController.logout);
 router.post("/user/sendOtp",userController.sendOtpUser);
 router.get("/user/getUserProfile",isUserAuth,userController.getUserProfile)
 
+
 //Admin flow apis
 router.get("/user/getAllUsers",userController.getAllUsers);
 
