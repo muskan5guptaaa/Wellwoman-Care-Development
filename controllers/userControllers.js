@@ -5,15 +5,11 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const axios = require('axios');
 const OTP=require("../models/otpModel")
-const Token = require("../models/tokenmodel"); // Adjust the path to where your Token model is located
-
+const Token = require("../models/tokenmodel"); 
 const mongoose = require("mongoose");
 
 
-
-
-// userController.js
-
+//OTP send using phone or email
 const { generateOtp, sendOtp } = require('../utils/sendOtp');
 const sendOtpUser = async (req, res) => {
     try {
@@ -238,9 +234,7 @@ const forgetPassword = async (req, res) => {
 
     // Generate a password reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-
-    // Save the token and expiry time in the user's record
-    user.resetToken = resetToken; // Ensure `resetToken` exists in your schema.
+    user.resetToken = resetToken; 
     user.resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
     await user.save();
 
@@ -297,7 +291,7 @@ const editProfile = async (req, res) => {
   }
 };
 
-//For Reset password
+//For Reset password with
 const resetPassword = async (req, res) => {
   try {
     const { email, token, newPassword } = req.body;
@@ -341,6 +335,28 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+    // Remove the token from the database
+    await Token.findOneAndDelete({
+      token,
+      objectDocId: userId,
+      userType: "User",
+    });
+
+    // Clear the token cookie
+    res.clearCookie("token");
+
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 //To get all users
 const getAllUsers = async (req, res) => {
   try {
@@ -357,17 +373,14 @@ const getAllUsers = async (req, res) => {
     } = req.query;
 
     const filter = {};
-
-    if (phone) {
-      filter.phone = { $regex: phone, $options: "i" };
+    if (search) {
+      const regex = new RegExp(search, "i");
+      filter.$or = [
+        { phone: { $regex: regex } },
+        { name: { $regex: regex } },
+        { email: { $regex: regex } },
+      ];
     }
-    if (name) {
-      filter.name = { $regex: name, $options: "i" };
-    }
-    if (email) {
-      filter.email = { $regex: email, $options: "i" };
-    }
-
     if (startDate && endDate) {
       filter.createdAt = {
         $gte: new Date(startDate),
@@ -428,27 +441,7 @@ const getAllUsers = async (req, res) => {
 
 
 
-const logout = async (req, res) => {
-  try {
-    const userId = req.userId;
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
-    // Remove the token from the database
-    await Token.findOneAndDelete({
-      token,
-      objectDocId: userId,
-      userType: "User",
-    });
-
-    // Clear the token cookie
-    res.clearCookie("token");
-
-    res.status(200).json({ success: true, message: "Logged out successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
-  }
-};
 const getUserProfile = async (req, res) => {
   try {
       const userId = req.user._id;
@@ -477,7 +470,6 @@ const getUserProfile = async (req, res) => {
           return res.status(404).json({ message: "User profile not found" });
       }
 
-      // Check if healthMetrics exists and has the fields 
       const profile = userProfile[0];
       if (profile.healthMetrics) {
           const { bloodPressure, heartRate, bodyTemperature, bloodGlucose } = profile.healthMetrics;
@@ -496,7 +488,6 @@ const getUserProfile = async (req, res) => {
           });
       }
 
-      // If no healthMetrics, return a response without health metrics
       res.status(200).json({ profile: userProfile[0] });
 
   } catch (error) {

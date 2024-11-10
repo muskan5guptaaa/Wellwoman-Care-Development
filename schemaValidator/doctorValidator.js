@@ -7,7 +7,7 @@ const forgetPasswordDoctorSV= Joi.object({
 
 const sendOtpSV = Joi.object({
   otpType: Joi.string()
-    .valid("forLogin")
+    .valid("forLogin",)
     .required(),
   phone: Joi.string(),
   email: Joi.string().email(),

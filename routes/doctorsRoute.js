@@ -10,9 +10,12 @@ router.post('/doctor/login',doctorController.loginDoctor);
 router.post('/doctor/forgetPasswordDoctor',doctorController.forgetPasswordDoctor);
 router.post('/doctor/changePassword',doctorController.changePasswordDoctor);
 router.post('/doctor/sendOtp',doctorController.sendOtpDoctor);
+router.post('/doctor/logout',doctorController.logoutDoctor);
+
+
 
 //admin
-router.get('/doctor/getAllDoctors',doctorController.getAllDoctors);
+router.get('/admin/getAllDoctors',doctorController.getAllDoctors);
 
 
 

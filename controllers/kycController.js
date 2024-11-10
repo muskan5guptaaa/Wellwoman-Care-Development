@@ -10,7 +10,6 @@ const {
 const uploadKYC = async (req, res) => {
     try {
       const doctorId = req.doctorId;
-      // Validate the request body against the schema
       const validateReqBody = await kycSchemaSV.validateAsync(req.body);
       const {
        fullName,
@@ -63,7 +62,6 @@ const uploadKYC = async (req, res) => {
   
       // Find the KYC entry for the doctorId
       const kycEntry = await KYC.findOne({ doctorId: doctorId });
-  
       if (!kycEntry) {
         return res.status(404).json({
           success: false,
@@ -73,7 +71,7 @@ const uploadKYC = async (req, res) => {
   
       return res.status(200).json({
         success: true,
-        data: kycEntry, // Return the KYC details for the doctor
+        data: kycEntry, 
       });
     } catch (err) {
       console.log(err);
@@ -83,11 +81,12 @@ const uploadKYC = async (req, res) => {
       });
     }
   };
+
+
   const showDoctorKYC = async (req, res) => {
     try {
-      const doctorId = req.doctorId; 
-      // Find the KYC entry based on the doctorId
-      const details = await KYC.findOne({ doctorId });
+      const id = req.params.id;
+      const details = await KYC.findById(id);
   
       if (!details) {
         return res.status(400).json({
@@ -95,7 +94,6 @@ const uploadKYC = async (req, res) => {
           msg: "KYC details not found for this doctor.",
         });
       }
-  
       return res.status(200).json({
         success: true,
         data: details, 

@@ -8,10 +8,3 @@ exports.kycSchemaSV = Joi.object({
   backImage: Joi.string().uri().required(),
 });
 
-exports.verifyKycSchemaSV = Joi.object({
-  kycDocId: Joi.string().required(),
-  isVerified: Joi.boolean().required(),
-    then: Joi.required(),
-    otherwise: Joi.optional().allow(null),
-  })
-

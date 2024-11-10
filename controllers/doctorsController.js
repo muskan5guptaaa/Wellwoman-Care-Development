@@ -26,7 +26,7 @@ const sendOtpDoctor = async (req, res) => {
           otpType,
           phone,
           otp,
-          appType: "Doctor", // Updated appType to differentiate for doctors
+          appType: "Doctor", 
         };
         const phoneEntry = await OTP.create(otpPayload);
         const response = await sendOtpViaSMS(phone, otp);
@@ -36,7 +36,7 @@ const sendOtpDoctor = async (req, res) => {
           otpType,
           email,
           otp,
-          appType: "Doctor", // Updated appType to differentiate for doctors
+          appType: "Doctor", 
         };
         const emailEntry = await OTP.create(otpPayload);
         const response = await sendOtpViaEmail(email, otp);
@@ -179,15 +179,13 @@ const forgetPasswordDoctor = async (req, res) => {
       // Generate a password reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
   
-      // Save the token and expiry time in the doctor's record
-      doctor.resetToken = resetToken; // Ensure `resetToken` exists in your Doctor schema.
+      doctor.resetToken = resetToken; 
       doctor.resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
       await doctor.save();
   
       // Create the reset link
       const resetLink = `https://your-frontend-url/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
   
-      // Optional: send reset link via email or SMS here using Nodemailer or Twilio
   
       return res.status(200).json({
         success: true,
@@ -252,6 +250,44 @@ const forgetPasswordDoctor = async (req, res) => {
     }
   };
   
+
+  const logoutDoctor = async (req, res) => {
+    try {
+      // Extract the token from the request (either from cookies or headers)
+      const doctorId = req.userId;
+      const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  
+      // If token is not found, return an error response
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: "No token provided"
+        });
+      }
+  
+      // Remove the token from the database (assuming you store tokens for each user type)
+      await Token.findOneAndDelete({
+        token,
+        objectDocId: doctorId,
+        userType: "Doctor",  // We assume the userType is "Doctor"
+      });
+  
+      // Clear the token cookie
+      res.clearCookie("token");
+  
+      return res.status(200).json({
+        success: true,
+        message: "Doctor logged out successfully",
+      });
+    } catch (err) {
+      console.error("Error in doctor logout:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+  
   const getAllDoctors = async (req, res) => {
     try {
       const {
@@ -262,7 +298,7 @@ const forgetPasswordDoctor = async (req, res) => {
         endDate,
         page = 1,
         limit = 10,
-        licenseNumber,
+        licenseNumber=1,
         sortBy = "name",
         sortOrder = 1,
       } = req.query;
@@ -279,9 +315,16 @@ const forgetPasswordDoctor = async (req, res) => {
           $lte: new Date(endDate),
         };
       }
-  
       const doctors = await Doctor.aggregate([
         { $match: filter },
+        {
+          $lookup: {
+            from: "kycs",
+            localField: "_id",
+            foreignField: "doctorId",
+            as: "kycDetails",
+          },
+        },
         {
           $project: {
             _id: 1,
@@ -292,10 +335,11 @@ const forgetPasswordDoctor = async (req, res) => {
             address: 1,
             city: 1,
             state: 1,
-            licenseNumber,
+            licenseNumber:1,
             country: 1,
             pincode: 1,
             createdAt: 1,
+            kycDetails: 1,
           },
         },
         { $sort: { [sortBy]: parseInt(sortOrder) } },
@@ -335,7 +379,6 @@ module.exports = {
     forgetPasswordDoctor,
     changePasswordDoctor,
     getAllDoctors,
-    sendOtpDoctor
-  
-  
+    sendOtpDoctor,
+    logoutDoctor
 };

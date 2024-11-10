@@ -40,10 +40,7 @@ const userSchema = new mongoose.Schema(
       type:Number
    },
    medicalHistory: String,
-   createdAt: {
-      type: Date,
-      default: Date.now
-   },
+   
    resetToken: {
        type: String 
       }, 
@@ -70,8 +67,8 @@ const userSchema = new mongoose.Schema(
       ],
       prescriptions: [
           {
-              type: String, // URLs or file paths for prescriptions
-          }
+              type: String, 
+          } 
       ],
   },
   createdAt: {
@@ -83,9 +80,6 @@ const userSchema = new mongoose.Schema(
     default: Date.now 
    } 
 },{timestamps:true});
-
-
-
 
 userSchema.methods.generateToken = function () {
    return jwt.sign(

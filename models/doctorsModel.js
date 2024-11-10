@@ -28,7 +28,8 @@ const doctorSchema = new mongoose.Schema({
      unique: true 
     },
   gender: { 
-    type: String 
+    type: String ,
+    enum: ['Male', 'Female', 'Other']
 },
   qualification: { 
     type: String 
@@ -60,7 +61,7 @@ isKycVerified: {
   pincode: { 
   type: String 
 },
-  consultationFee: { 
+cconsultationFee: { 
   type: Number 
 },
 resetToken: {
@@ -69,7 +70,7 @@ resetToken: {
 resetTokenExpiry: { 
  type: Date 
 },
-  isAvailable: {
+isAvailable: {
      type: Boolean, 
      default: true 
     },
@@ -91,13 +92,18 @@ resetTokenExpiry: {
      }
 });
 
-doctorSchema.methods.generateToken = function() {
+doctorSchema.methods.generateToken = function () {
   return jwt.sign(
-      { id: this._id, role: this.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+    {
+      _id: this.id,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
   );
 };
+
 
 
 const Doctor = mongoose.model('Doctor', doctorSchema);

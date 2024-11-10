@@ -11,7 +11,7 @@ const otpSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: false,
+    required: true,
   },
   email: {
     type: String,
@@ -22,11 +22,7 @@ const otpSchema = new mongoose.Schema({
     default: Date.now,
     expires: "5m",
   },
-  appType: {
-    type: String,
-    enum: ["User", "Partner"],
-    required: true,
-  },
+  
 });
 
 const OTP = mongoose.model("OTP", otpSchema);
