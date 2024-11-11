@@ -6,11 +6,7 @@ const appointmentSchema = new mongoose.Schema({
     ref: "Doctor", // Reference to the Doctor model
     required: true,
   },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Reference to the User model
-    required: true,
-  },
+ 
   date: {
     type: Date,
     required: true,
@@ -42,7 +38,6 @@ const appointmentSchema = new mongoose.Schema({
   },
 });
 
-// Update the `updatedAt` field before saving the document
 appointmentSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
