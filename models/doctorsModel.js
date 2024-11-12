@@ -73,7 +73,7 @@ resetTokenExpiry: {
 isAvailable: {
      type: Boolean, 
      default: true 
-    },
+ },
   ratings: [{ 
     rating: Number, 
     review: String,

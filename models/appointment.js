@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const appointmentSchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Doctor", // Reference to the Doctor model
+    ref: "Doctor",
     required: true,
   },
  
@@ -12,7 +12,7 @@ const appointmentSchema = new mongoose.Schema({
     required: true,
   },
   timeSlot: {
-    type: String, // Format can be "10:00 AM - 11:00 AM" or any other suitable format
+    type: String, 
     required: true,
   },
   status: {
