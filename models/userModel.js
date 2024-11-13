@@ -25,12 +25,26 @@ const userSchema = new mongoose.Schema(
       enum: ['Male', 'Female', 'Other']
    },
    address: {
-      street: String,
-      city: String,
-      state: String,
-      postalCode: String
-   },
-   Diseses:{
+      type: String,
+      required: false,
+    },
+    city: {
+      type: String,
+      required: false,
+    },
+    pincode: {
+      type: String,
+      required: false,
+    },
+    state: {
+      type: String,
+      required: false,
+    },
+    country: {
+      type: String,
+      required: false,
+    },
+   diseses:{
       type:String
    },
    height:{
@@ -40,7 +54,6 @@ const userSchema = new mongoose.Schema(
       type:Number
    },
    medicalHistory: String,
-   
    resetToken: {
        type: String 
       }, 
@@ -62,7 +75,7 @@ const userSchema = new mongoose.Schema(
       },
       testReports: [
           {
-              type: String, // URLs or file paths for test reports
+              type: String, 
           }
       ],
       prescriptions: [

@@ -19,6 +19,26 @@ const doctorSchema = new mongoose.Schema({
       required: true,
      unique: true
     },
+   address: {
+      type: String,
+      required: false,
+    },
+   city: {
+      type: String,
+      required: false,
+    },
+    pincode: {
+      type: String,
+      required: false,
+    },
+    state: {
+      type: String,
+      required: false,
+    },
+    country: {
+      type: String,
+      required: false,
+    },
   specialization: {
      type: String
     },
@@ -27,6 +47,7 @@ const doctorSchema = new mongoose.Schema({
      required: true, 
      unique: true 
     },
+
   gender: { 
     type: String ,
     enum: ['Male', 'Female', 'Other']
@@ -61,7 +82,7 @@ isKycVerified: {
   pincode: { 
   type: String 
 },
-cconsultationFee: { 
+consultationFee: { 
   type: Number 
 },
 resetToken: {
@@ -74,14 +95,6 @@ isAvailable: {
      type: Boolean, 
      default: true 
  },
-  ratings: [{ 
-    rating: Number, 
-    review: String,
-    UserId: { type: mongoose.Schema.Types.ObjectId, 
-     ref: 'User' } }],
-     user: [{ 
-    type: mongoose.Schema.Types.ObjectId,
-     ref: 'User' }],
   createdAt: {
      type: Date, 
      default: Date.now 

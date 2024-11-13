@@ -1,10 +1,55 @@
 const Doctor=require("../models/doctorsModel");
-const KYC= require("../models/kycModel");
+const DoctorKyc= require("../models/kycModel");
 const {
    kycSchemaSV,
    verifyKycSchemaSV 
 }=require("../schemaValidator/kycValidator")
 
+
+
+
+
+const createOrUpdateKyc = async (req, res) => {
+  try {
+    const { doctorId, fullName, frontImage, backImage, licenseNumber, licenseExpiryDate, documentType, documentNumber, documentFileUrl } = req.body;
+
+    // Check if doctor exists
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ success: false, message: "Doctor not found." });
+    }
+
+    // Check if the KYC is already created for the doctor
+    let existingKyc = await DoctorKyc.findOne({ doctorId });
+    if (existingKyc) {
+      // If KYC already exists, update it
+      existingKyc = await DoctorKyc.findOneAndUpdate(
+        { doctorId },
+        { fullName, frontImage, backImage, licenseNumber, licenseExpiryDate, documentType, documentNumber, documentFileUrl },
+        { new: true }
+      );
+      return res.status(200).json({ success: true, message: "KYC updated successfully.", data: existingKyc });
+    }
+
+    // Create new KYC
+    const newKyc = await DoctorKyc.create({
+      doctorId,
+      fullName,
+      frontImage,
+      backImage,
+      licenseNumber,
+      licenseExpiryDate,
+      documentType,
+      documentNumber,
+      documentFileUrl,
+    });
+
+    return res.status(201).json({ success: true, message: "KYC created successfully.", data: newKyc });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
 
 //upload KYC Documents
 const uploadKYC = async (req, res) => {
@@ -112,5 +157,6 @@ const uploadKYC = async (req, res) => {
   module.exports={
     uploadKYC,
     getKYCById,
-    showDoctorKYC
+    showDoctorKYC,
+    createOrUpdateKyc
   }

@@ -1,5 +1,7 @@
 const { required } = require("joi");
 const mongoose = require("mongoose");
+const Doctor=require("../controllers/doctorsController")
+const KYC =require("../controllers/kycController")
 
 const doctorKycSchema = new mongoose.Schema({
   doctorId: {

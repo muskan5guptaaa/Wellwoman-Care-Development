@@ -9,9 +9,6 @@ const {forgetPasswordDoctorSV,sendOtpSV} = require('../schemaValidator/doctorVal
 const { generateOTP } = require('../utils/sendOtp');
 
 
-
-
-
 const sendOtpDoctor = async (req, res) => {
     try {
       if (req.body.email) {
@@ -56,10 +53,11 @@ const sendOtpDoctor = async (req, res) => {
     }
   };
   
+
 // Doctor signup
 const signUpDoctor = async (req, res) => {
     try {
-        const { name, email, phone, password,licenseNumber } = req.body;
+        const { name, email,address, phone, password,licenseNumber } = req.body;
 
         // Check if the email or phone already exists
         let existingDoctor = await Doctor.findOne({ email });
@@ -80,8 +78,9 @@ const signUpDoctor = async (req, res) => {
             name,
             email,
             phone,
+            address,
             password: hashedPassword,
-            licenseNumber
+            licenseNumber,
         });
 
         return res.status(201).json({ success: true, message: "Doctor registered successfully." });
@@ -138,8 +137,6 @@ const loginDoctor = async (req, res) => {
             objectDocId: doctor._id,
             expired_at: new Date(Date.now() + 60 * 60 * 1000)
         });
-
-
         // Return the token and doctor details
         return res.status(200).json({
             doctorId: doctor._id,
@@ -147,7 +144,6 @@ const loginDoctor = async (req, res) => {
             message: 'Login successful',
             token: token
         });
-
     } catch (err) {
         console.error(err);
         return res.status(500).json({
@@ -185,8 +181,7 @@ const forgetPasswordDoctor = async (req, res) => {
   
       // Create the reset link
       const resetLink = `https://your-frontend-url/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
-  
-  
+    
       return res.status(200).json({
         success: true,
         message: 'Password reset link sent successfully',
