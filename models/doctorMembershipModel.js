@@ -7,8 +7,18 @@ const doctorMembershipSchema=new mongoose.Schema({
         required:true,
         ref:"Doctor",
     },
+    startDate:{
+        type:date,
+    },
+    endDate:{
+        type:date
+    },
+    renewalDate:{
+      type:date,
+      required:true
+    },
     transactionId:{
-  type:String
+        type:String
     },
     amount:{
         type:Number,
@@ -29,6 +39,4 @@ const doctorMembershipSchema=new mongoose.Schema({
     }
 });
 
-const DoctorMembership=mongoose.model(
-    "Doctor"
-)
+const DoctorMembership=mongoose.model("Doctor",doctorMembershipSchema)

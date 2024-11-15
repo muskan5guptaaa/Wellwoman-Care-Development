@@ -6,11 +6,22 @@ const appointmentSchema = new mongoose.Schema({
     ref: "Doctor",
     required: true,
   },
- 
   date: {
     type: Date,
     required: true,
   },
+  duration: {
+    type: String,
+    required: true,
+    enum: ["15 mins", "30 mins", "45 mins", "1 hour"]
+},
+availability: {
+  days: {
+      type: [String],
+      enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      required: true
+  },
+},
   timeSlot: {
     type: String, 
     required: true,
@@ -23,6 +34,11 @@ const appointmentSchema = new mongoose.Schema({
   reason: {
     type: String,
     required: true,
+  },
+  appointmentType: {
+    type: String,
+    enum: ["Online", "Offline"], // Validates that 
+    required: true
   },
   consultationFee: {
     type: Number,

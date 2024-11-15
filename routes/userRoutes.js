@@ -7,7 +7,7 @@ const { isUserAuth } = require("../middleware/authmiddleware");
 //User flow apis
 router.post("/user/signup", userController.signUpUser);
 router.post("/user/login",userController.loginUser);
-router.post("/user/changePassword",userController.changePassword);
+router.post("/user/changePassword",isUserAuth,userController.changePassword);
 router.put("/user/editProfile",isUserAuth,userController.editProfile);
 router.post("/user/forgetPassword",userController.forgetPassword);
 router.post("/user/logout",userController.logout);

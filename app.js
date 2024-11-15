@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 const authMiddleware = require("./middleware/authmiddleware"); 
 const userRoutes = require('./routes/userRoutes'); 
 
@@ -14,6 +15,7 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

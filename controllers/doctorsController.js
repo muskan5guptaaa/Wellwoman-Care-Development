@@ -286,6 +286,7 @@ const forgetPasswordDoctor = async (req, res) => {
   const getAllDoctors = async (req, res) => {
     try {
       const {
+        search,
         phone,
         name,
         email,
@@ -300,9 +301,14 @@ const forgetPasswordDoctor = async (req, res) => {
   
       const filter = {};
   
-      if (phone) filter.phone = { $regex: phone, $options: "i" };
-      if (name) filter.name = { $regex: name, $options: "i" };
-      if (email) filter.email = { $regex: email, $options: "i" };
+      if (search) {
+        const regex = new RegExp(search, "i");
+        filter.$or = [
+          { phone: { $regex: regex } },
+          { name: { $regex: regex } },
+          { email: { $regex: regex } },
+        ];
+      }
   
       if (startDate && endDate) {
         filter.createdAt = {
@@ -314,9 +320,9 @@ const forgetPasswordDoctor = async (req, res) => {
         { $match: filter },
         {
           $lookup: {
-            from: "kycs",
+            from: "doctorKycs",
             localField: "_id",
-            foreignField: "doctorId",
+            foreignField: "objectDocId",
             as: "kycDetails",
           },
         },

@@ -75,7 +75,7 @@ const signUpUser = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        username: email.split("@")[0], // Default username based on email if not provided
+        username: email.split("@")[0], 
         phone: phone
        
       });
@@ -137,7 +137,6 @@ const signUpUser = async (req, res) => {
       token: token,
       objectDocId: user._id,
       userType: "User",
-      deviceType: deviceType,
       expired_at: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
     });
 
@@ -349,7 +348,6 @@ const logout = async (req, res) => {
 
     // Clear the token cookie
     res.clearCookie("token");
-
     res.status(200).json({ success: true, message: "Logged out successfully" });
   } catch (err) {
     console.error(err);
@@ -437,10 +435,6 @@ const getAllUsers = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 const getUserProfile = async (req, res) => {
   try {
