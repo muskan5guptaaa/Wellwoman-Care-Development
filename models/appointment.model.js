@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 
 const appointmentSchema = new mongoose.Schema({
@@ -6,15 +7,15 @@ const appointmentSchema = new mongoose.Schema({
     ref: "Doctor",
     required: true,
   },
+  userId:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"User",
+    required:true,
+  },
   date: {
     type: Date,
     required: true,
   },
-  duration: {
-    type: String,
-    required: true,
-    enum: ["15 mins", "30 mins", "45 mins", "1 hour"]
-},
 availability: {
   days: {
       type: [String],
@@ -28,16 +29,12 @@ availability: {
   },
   status: {
     type: String,
-    enum: ["Scheduled", "Completed", "Cancelled"],
-    default: "Scheduled",
-  },
-  reason: {
-    type: String,
-    required: true,
+    enum: ["Available", "Booked", "Not Available"],
+    default: "Available",
   },
   appointmentType: {
     type: String,
-    enum: ["Online", "Offline"], // Validates that 
+    enum: ["Online", "Offline"], // Validate
     required: true
   },
   consultationFee: {

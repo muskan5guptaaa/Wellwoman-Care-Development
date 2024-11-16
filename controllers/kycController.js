@@ -15,15 +15,26 @@ const createOrUpdateKyc = async (req, res) => {
         message: error.details[0].message,
       });
     }
-
-    const { doctorId, fullName, frontImage, backImage, licenseNumber, licenseExpiryDate, documentType, documentNumber, documentFileUrl } = req.body;
+    const { 
+      doctorId, 
+      fullName, 
+      frontImage, 
+      backImage, 
+      licenseNumber, 
+      licenseExpiryDate, 
+      documentType,
+       documentNumber, 
+       documentFileUrl
+   } = req.body;
 
     // Check if doctor exists
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
-      return res.status(404).json({ success: false, message: "Doctor not found." });
+      return res.status(404).json({
+         success: false, 
+         message: "Doctor not found."
+       });
     }
-
     // Check if the KYC is already created for the doctor
     let existingKyc = await DoctorKyc.findOne({ doctorId });
     if (existingKyc) {
@@ -38,11 +49,19 @@ const createOrUpdateKyc = async (req, res) => {
            licenseExpiryDate, 
            documentType,
            documentNumber,
-            documentFileUrl 
+          documentFileUrl ,
+          kycStatus: "Completed"
          },
-        { new: true }
+        {
+           new: true
+       }
       );
-      return res.status(200).json({ success: true, message: "KYC updated successfully.", data: existingKyc });
+      return res.status(200).json({ 
+        success: true, 
+        message: "KYC updated successfully.",
+         data: existingKyc ,
+         status:existingKyc.isKycVerified ? "Completed":"Pending",
+        });
     }
 
     // Create new KYC
@@ -56,20 +75,27 @@ const createOrUpdateKyc = async (req, res) => {
       documentType,
       documentNumber,
       documentFileUrl,
+      kycStatus
     });
 
-    return res.status(201).json({ success: true, message: "KYC created successfully.", data: newKyc });
+    return res.status(201).json({
+       success: true,
+        message: "KYC created successfully.",
+         data: newKyc ,
+        });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ success: false, message: "Internal Server Error." });
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal Server Error." 
+    });
   }
 };
-
 
 //GET KYC BY ID
 const getById = async (req, res) => {
   try {
-    const doctorId = req.params.doctorId; // Assuming you pass doctorId in the URL path as a parameter
+    const doctorId = req.params.doctorId; 
     const details = await DoctorKyc.findOne({ doctorId: doctorId });
 
     if (!details) {
@@ -91,7 +117,31 @@ const getById = async (req, res) => {
   }
 };
 
+const getDoctorKycStatus=async(req,res)=>{
+  try{
+    const {doctorId}=req.body;
+    const Kyc =await DoctorKyc.findOne({doctorId}).sort({createdAt:-1});
+    return res.status(200).json({
+      success:true,
+      status:{
+        kycStatus:Kyc?Kyc.isKycVerified?"Completed":"Pending":"Not Found",
+
+      }
+    });
+  }catch(err){
+    console.log(err);
+    return res.status(500).json({
+      success:false,
+      message:"Internal Server Error"
+    });
+
+  }
+}
+
+
+
   module.exports={
     getById,
-    createOrUpdateKyc
+    createOrUpdateKyc,
+    getDoctorKycStatus,
   }

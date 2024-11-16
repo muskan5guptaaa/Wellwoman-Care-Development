@@ -41,7 +41,12 @@ const doctorKycSchema = new mongoose.Schema({
       },
   isKycVerified: {
     type: Boolean,
-    default: false,
+    default: true,
+  },
+  status: {
+    type: String,
+    enum: ["Pending", "Completed"],
+    default: "Pending",
   },
   kycSubmissionDate: {
     type: Date,
@@ -49,10 +54,6 @@ const doctorKycSchema = new mongoose.Schema({
   },
   kycVerifiedDate: {
     type: Date,
-  },
-  verifiedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Admin",
   },
 });
 

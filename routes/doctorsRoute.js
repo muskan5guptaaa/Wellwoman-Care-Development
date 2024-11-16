@@ -6,7 +6,7 @@ const { signUpDoctor,loginDoctor,forgetPasswordDoctor } = require('../controller
 const { isDoctorAuth } = require('../middleware/authmiddleware');
 
 // Doctor signup route
-router.post('/doctor/signup',  isDoctorAuth,    doctorController.signUpDoctor);
+router.post('/doctor/signup',     doctorController.signUpDoctor);
 router.post('/doctor/login',doctorController.loginDoctor);
 router.post('/doctor/forgetPasswordDoctor',doctorController.forgetPasswordDoctor);
 router.post('/doctor/changePassword',doctorController.changePasswordDoctor);

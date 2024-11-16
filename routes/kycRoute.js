@@ -6,10 +6,10 @@ const { isDoctorAuth } = require("../middleware/authmiddleware");
 
 
 
-router.post('/kyc/createKyc',kycController.createOrUpdateKyc)
+router.post('/kyc/createKyc',isDoctorAuth,kycController.createOrUpdateKyc)
 router.get('/kyc/:doctorId',  kycController.getById);
 
-
+router.post('/kyc/status',kycController.getDoctorKycStatus)
 
 
 

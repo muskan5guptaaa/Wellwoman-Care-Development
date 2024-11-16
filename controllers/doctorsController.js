@@ -320,11 +320,17 @@ const forgetPasswordDoctor = async (req, res) => {
         { $match: filter },
         {
           $lookup: {
-            from: "doctorKycs",
-            localField: "_id",
-            foreignField: "objectDocId",
-            as: "kycDetails",
-          },
+            from: "DoctorKyc",              
+            localField: "_id",         
+            foreignField: "doctorId",   
+            pipeline: [
+              {
+                 $project: 
+                 { status: 1 } 
+                } 
+            ],
+            as: "kycDetails",        
+          }
         },
         {
           $project: {
@@ -340,7 +346,10 @@ const forgetPasswordDoctor = async (req, res) => {
             country: 1,
             pincode: 1,
             createdAt: 1,
-            kycDetails: 1,
+            kycStatus: {
+              $ifNull: [{ $arrayElemAt: ["$kycDetails.status", 0] }, "Not Found"]
+            }
+      
           },
         },
         { $sort: { [sortBy]: parseInt(sortOrder) } },

@@ -302,7 +302,7 @@ const resetPassword = async (req, res) => {
       resetTokenExpiry:
        {
          $gt: Date.now()
-         }, // Check token expiry
+         }, 
     });
 
     if (!user) {
