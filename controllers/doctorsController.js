@@ -57,7 +57,7 @@ const sendOtpDoctor = async (req, res) => {
 // Doctor signup
 const signUpDoctor = async (req, res) => {
     try {
-        const { name, email,address, phone, password,licenseNumber } = req.body;
+        const { name, email, password} = req.body;
 
         // Check if the email or phone already exists
         let existingDoctor = await Doctor.findOne({ email });
@@ -69,6 +69,12 @@ const signUpDoctor = async (req, res) => {
         if (existingPhone) {
             return res.status(400).json({ success: false, message: "Phone number already registered." });
         }
+               // Validate availability
+    if (!availability.days || !availability.timeSlots) {
+      return res
+        .status(400)
+        .json({ message: "Availability must include both days and timeSlots." });
+    }
 
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -81,6 +87,9 @@ const signUpDoctor = async (req, res) => {
             address,
             password: hashedPassword,
             licenseNumber,
+            availability,
+            consultationFee
+            
         });
 
         return res.status(201).json({ success: true, message: "Doctor registered successfully." });
@@ -382,6 +391,35 @@ const forgetPasswordDoctor = async (req, res) => {
       });
     }
   };
+
+
+  const updateAvailabilityDoctor = async (req, res) => {
+    try {
+      const { doctorId } = req.params;
+      const { availability } = req.body; // Ensure this follows the correct structure
+  
+      if (!Array.isArray(availability)) {
+        return res.status(400).json({ message: "Availability should be an array of objects" });
+      }
+  
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        return res.status(404).json({ message: "Doctor not found" });
+      }
+  
+      doctor.availability = availability;
+      await doctor.save();
+  
+      res.status(200).json({
+        success: true,
+        message: "Doctor availability updated successfully",
+        availability: doctor.availability,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: "Server error", error });
+    }
+  };
   
 module.exports = {
     signUpDoctor,
@@ -390,5 +428,6 @@ module.exports = {
     changePasswordDoctor,
     getAllDoctors,
     sendOtpDoctor,
-    logoutDoctor
+    logoutDoctor,
+    updateAvailabilityDoctor
 };

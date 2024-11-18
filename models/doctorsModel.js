@@ -19,13 +19,17 @@ const doctorSchema = new mongoose.Schema({
       required: true,
      unique: true
     },
-    availability: {
-      days: {
-          type: [String],
-          enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-          required: true
+    availability: [
+      {
+        day: {
+           type: String,
+           required: true 
+          },
+        timeSlots: {
+           type: [String],
+            required: true },
       },
-    },
+    ],
    address: {
       type: String,
       required: false,
