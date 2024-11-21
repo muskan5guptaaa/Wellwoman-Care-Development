@@ -3,7 +3,7 @@ const Doctor=require("../models/doctorsModel");
   const User=require("../models/userModel")
 
 
-  
+
   const getDoctorSchedule = async (req, res) => {
     try {
       const { doctorId, date } = req.query;
@@ -60,7 +60,6 @@ const Doctor=require("../models/doctorsModel");
       res.status(500).json({ message: 'Server error', error });
     }
   };
-
 
   // Book Appointment Controller
   const bookAppointment = async (req, res) => {
