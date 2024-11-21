@@ -392,35 +392,91 @@ const forgetPasswordDoctor = async (req, res) => {
     }
   };
 
-
-  const updateAvailabilityDoctor = async (req, res) => {
-    try {
-      const { doctorId } = req.params;
-      const { availability } = req.body; // Ensure this follows the correct structure
+  const generateTimeSlots = (startTime, endTime) => {
+    const slots = [];
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
   
-      if (!Array.isArray(availability)) {
-        return res.status(400).json({ message: "Availability should be an array of objects" });
-      }
-  
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
-        return res.status(404).json({ message: "Doctor not found" });
-      }
-  
-      doctor.availability = availability;
-      await doctor.save();
-  
-      res.status(200).json({
-        success: true,
-        message: "Doctor availability updated successfully",
-        availability: doctor.availability,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ success: false, message: "Server error", error });
+    if (start >= end) {
+      return slots;
     }
+  
+    let current = start;
+    while (current < end) {
+      const next = new Date(current.getTime() + 30 * 60000); // Add 30 minutes
+      slots.push(`${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`);
+      current = next;
+    }
+    return slots;
   };
   
+// Update Doctor's Availability
+const updateAvailabilityDoctor = async (req, res) => {
+  try {
+    const { doctorId } = req.params; // Doctor ID from request parameters
+    const { days, startTime, endTime, appointmentType } = req.body; // Days, times, and appointment type from request body
+
+    // Validate input
+    if (!startTime || !endTime || !appointmentType) {
+      return res
+        .status(400)
+        .json({ message: "Start time, end time, and appointment type are required." });
+    }
+
+    // Validate days
+    const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const isValidDays = days.every((day) => validDays.includes(day));
+    if (!isValidDays) {
+      return res.status(400).json({ message: "Invalid day(s) provided." });
+    }
+
+    // Helper function to generate 30-minute time slots
+    const generateTimeSlots = (startTime, endTime) => {
+      const slots = [];
+      const start = new Date(`1970-01-01T${startTime}:00`);
+      const end = new Date(`1970-01-01T${endTime}:00`);
+
+      if (start >= end) {
+        return slots;
+      }
+
+      let current = start;
+      while (current < end) {
+        const next = new Date(current.getTime() + 30 * 60000); // Add 30 minutes
+        slots.push(`${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`);
+        current = next;
+      }
+      return slots;
+    };
+
+    // Generate availability with time slots
+    const availability = days.map((day) => ({
+      day,
+      timeSlots: generateTimeSlots(startTime, endTime),
+      appointmentType,
+    }));
+
+    // Find the doctor and update their availability
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    doctor.availability = availability;
+    await doctor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Doctor availability updated successfully.",
+      availability: doctor.availability,
+    });
+  } catch (error) {
+    console.error("Error updating doctor availability:", error);
+    res.status(500).json({ success: false, message: "Server error", error });
+  }
+};
+
+
 module.exports = {
     signUpDoctor,
     loginDoctor,
@@ -429,5 +485,6 @@ module.exports = {
     getAllDoctors,
     sendOtpDoctor,
     logoutDoctor,
-    updateAvailabilityDoctor
+    updateAvailabilityDoctor,
+    generateTimeSlots
 };

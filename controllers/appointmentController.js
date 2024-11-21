@@ -1,5 +1,8 @@
 const Appointment = require("../models/appointment.model");
 const Doctor=require("../models/doctorsModel");
+  const User=require("../models/userModel")
+
+
   
   const getDoctorSchedule = async (req, res) => {
     try {
@@ -62,61 +65,82 @@ const Doctor=require("../models/doctorsModel");
   // Book Appointment Controller
   const bookAppointment = async (req, res) => {
     try {
-      const { doctorId, date, timeSlot, userId, appointmentType } = req.body;
+      const { doctorId } = req.params; // Doctor ID from request parameters
+      const { userId, day, timeSlot, appointmentType } = req.body; // Appointment details from request body
   
-      // Validate doctor
+      // Validate input
+      if (!day || !timeSlot || !appointmentType) {
+        return res.status(400).json({
+          message: "Day, time slot, and appointment type are required.",
+        });
+      }
+  
+      // Validate day
+      const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      if (!validDays.includes(day)) {
+        return res.status(400).json({ 
+          message: "Invalid day provided."
+         });
+      }
+  
+      // Find the doctor
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
-        return res.status(404).json({ message: "Doctor not found" });
+        return res.status(404).json({
+           message: "Doctor not found."
+           });
       }
   
-      // Ensure availability is an array of objects with days and timeSlots
-      if (!Array.isArray(doctor.availability)) {
-        return res.status(400).json({ message: "Doctor availability is not properly defined" });
-      }
+      // Check if the doctor has availability on the given day and appointmentType
+      const availability = doctor.availability.find(
+        (slot) => slot.day === day && (slot.appointmentType === appointmentType || slot.appointmentType === "both")
+      );
   
-      // Validate the selected day
-      const appointmentDate = new Date(date);
-      const dayOfWeek = appointmentDate.toLocaleString("en-US", { weekday: "long" });
-  
-      // Find the availability for the selected day
-      const availability = doctor.availability.find((availability) => availability.day === dayOfWeek);
       if (!availability) {
-        return res.status(400).json({ message: `Doctor is not available on ${dayOfWeek}` });
+        return res.status(400).json({
+          message: `Doctor is not available on ${day} for ${appointmentType} appointments.`,
+        });
       }
   
-      // Check if the timeSlot is available for the selected day
-      if (!availability.timeSlots.includes(timeSlot)) {
-        return res.status(400).json({ message: `Doctor is not available at ${timeSlot} on ${dayOfWeek}` });
-      }
-  
-      // Check if the time slot is already booked
-      const existingAppointment = await Appointment.findOne({ doctorId, date, timeSlot });
-      if (existingAppointment) {
-        return res.status(400).json({ message: "Time slot is already booked" });
-      }
-  
-      // Create a new appointment
-      const appointment = new Appointment({
-        doctorId,
+      // Check if the time slot is already booked by another user
+      const existingAppointment = await Appointment.findOne({
         userId,
-        date,
+        day,
         timeSlot,
         appointmentType,
       });
-      await appointment.save();
+  
+      if (existingAppointment) {
+        return res.status(400).json({
+          message: "Time slot already booked by another user.",
+          existingAppointment, // Include the existing appointment details in the response
+        });
+      }
+  
+      // Create a new appointment
+      const newAppointment = new Appointment({
+        userId,
+        doctorId,
+        day,
+        timeSlot,
+        appointmentType,
+      });
+  
+      await newAppointment.save();
   
       res.status(201).json({
-        message: "Appointment booked successfully",
-        appointment,
+        success: true,
+        message: "Appointment booked successfully.",
+        
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Server error", error });
+      console.error("Error booking appointment:", error);
+      res.status(500).json({ success: false, message: "Server error", error });
     }
   };
   
-
+  
+  
 //for cancel appointment
   const cancelAppointment = async (req, res) => {
     try {

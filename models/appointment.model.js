@@ -14,7 +14,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    required: true,
+    required: false
   },
 availability: {
   days: {
@@ -23,6 +23,7 @@ availability: {
       required: true
   },
 },
+
   timeSlot: {
     type: String, 
     required: true,
@@ -32,14 +33,18 @@ availability: {
     enum: ["Available", "Booked", "Not Available"],
     default: "Available",
   },
+  type: {
+    type: String,
+    enum: ['online', 'offline']
+  },
   appointmentType: {
     type: String,
-    enum: ["Online", "Offline"], // Validate
+    enum: ["online", "offline"], // Validate
     required: true
   },
   consultationFee: {
     type: Number,
-    required: true,
+    required: false,
   },
   createdAt: {
     type: Date,

@@ -368,9 +368,12 @@ const getAllUsers = async (req, res) => {
       limit = 10,
       sortBy = "name",
       sortOrder = 1,
+      search,
     } = req.query;
 
     const filter = {};
+
+    // Handle search filter
     if (search) {
       const regex = new RegExp(search, "i");
       filter.$or = [
@@ -379,16 +382,20 @@ const getAllUsers = async (req, res) => {
         { email: { $regex: regex } },
       ];
     }
+
+    // Handle date range filter
     if (startDate && endDate) {
       filter.createdAt = {
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       };
     }
+
+    // Log the filter for debugging
+    console.log("Filter Object:", filter);
+
     const users = await User.aggregate([
-      {
-        $match: filter,
-      },
+      { $match: filter },
       {
         $project: {
           _id: 1,
@@ -397,16 +404,13 @@ const getAllUsers = async (req, res) => {
           phone: 1,
           address: 1,
           createdAt: 1,
-          address: 1,
           city: 1,
           state: 1,
           country: 1,
           pincode: 1,
         },
       },
-      {
-        $sort: { [sortBy]: parseInt(sortOrder) },
-      },
+      { $sort: { [sortBy]: parseInt(sortOrder) } },
       {
         $facet: {
           data: [{ $skip: (page - 1) * limit }, { $limit: parseInt(limit) }],
@@ -414,9 +418,10 @@ const getAllUsers = async (req, res) => {
         },
       },
     ]);
+
     const result = users[0] || {};
     const totalItems =
-    result.totalCount.length > 0 ? result.totalCount[0].total : 0;
+      result.totalCount.length > 0 ? result.totalCount[0].total : 0;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
     return res.status(200).json({
@@ -428,10 +433,10 @@ const getAllUsers = async (req, res) => {
       total: totalItems,
     });
   } catch (error) {
-    console.log("Error in fetching all users", error);
+    console.error("Error in fetching all users:", error);
     return res.status(500).json({
       success: false,
-      message: error?.message,
+      message: error?.message || "An error occurred while fetching users.",
     });
   }
 };

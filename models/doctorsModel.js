@@ -21,15 +21,14 @@ const doctorSchema = new mongoose.Schema({
     },
     availability: [
       {
-        day: {
-           type: String,
-           required: true 
-          },
-        timeSlots: {
-           type: [String],
-            required: true },
+        day: { type: String, required: true },
+        timeSlots: [{ type: String, required: true }],
+        _id: false,
+        appointmentType: { type: String, enum: ["online", "offline", "both"], default: "both" },
+
       },
     ],
+  
    address: {
       type: String,
       required: false,
@@ -91,27 +90,6 @@ resetTokenExpiry: {
 isAvailable: {
      type: Boolean, 
      default: true 
- },
-accountHolderName: {
-    type: String,
-    required: false,
-  },
-  accountNumber: {
-    type: String,
-    required: false,
-    unique: true,
-  },
-  ifscCode: {
-    type: String,
-    required: false,
-  },
-  bankName: {
-    type: String,
-    required: false,
-  },
-  branchName: {
-    type: String,
-    required: false,
 },
   createdAt: {
      type: Date, 
