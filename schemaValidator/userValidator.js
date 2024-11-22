@@ -4,7 +4,7 @@ const signUpUserSV = Joi.object({
     name: Joi.string().required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
-    phone: Joi.string().required()
+    phone: Joi.string()
 });
 
 const sendOtpSV = Joi.object({

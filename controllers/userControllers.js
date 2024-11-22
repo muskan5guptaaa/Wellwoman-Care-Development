@@ -58,7 +58,7 @@ const signUpUser = async (req, res) => {
     try {
       // Validate request body using a schema validator
       const validateReqBody = await signUpUserSV.validateAsync(req.body);
-      const { email, password, name ,phone} = validateReqBody;
+      const { email, password, name } = validateReqBody;
   
       // Check if the email and phone already exists
       let existingUser = await User.findOne({ email: email, phone: phone });
@@ -75,9 +75,7 @@ const signUpUser = async (req, res) => {
         name,
         email,
         password: hashedPassword,
-        username: email.split("@")[0], 
-        phone: phone
-       
+        username: email.split("@")[0],        
       });
       return res.status(201).json({
         success: true,
