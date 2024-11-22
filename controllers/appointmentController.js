@@ -92,7 +92,7 @@ const Doctor=require("../models/doctorsModel");
   
       // Check if the doctor has availability on the given day and appointmentType
       const availability = doctor.availability.find(
-        (slot) => slot.day === day && (slot.appointmentType === appointmentType || slot.appointmentType === "both")
+        (slot) => slot.day === day && (slot.appointmentType === appointmentType || slot.appointmentType === "both" || slot.timeSlots===timeSlot)
       );
   
       if (!availability) {

@@ -359,6 +359,7 @@ const logout = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const {
+      search,
       phone,
       name,
       email,
@@ -368,7 +369,6 @@ const getAllUsers = async (req, res) => {
       limit = 10,
       sortBy = "name",
       sortOrder = 1,
-      search,
     } = req.query;
 
     const filter = {};
@@ -391,11 +391,23 @@ const getAllUsers = async (req, res) => {
       };
     }
 
-    // Log the filter for debugging
-    console.log("Filter Object:", filter);
-
     const users = await User.aggregate([
       { $match: filter },
+      {
+        $lookup: {
+          from: "UserKyc", // Assuming KYC details are in a collection called 'UserKyc'
+          localField: "_id",
+          foreignField: "userId",
+          pipeline: [
+            {
+              $project: {
+                status: 1,
+              },
+            },
+          ],
+          as: "kycDetails",
+        },
+      },
       {
         $project: {
           _id: 1,
@@ -403,11 +415,14 @@ const getAllUsers = async (req, res) => {
           email: 1,
           phone: 1,
           address: 1,
-          createdAt: 1,
           city: 1,
           state: 1,
           country: 1,
           pincode: 1,
+          createdAt: 1,
+          kycStatus: {
+            $ifNull: [{ $arrayElemAt: ["$kycDetails.status", 0] }, "Not Found"],
+          },
         },
       },
       { $sort: { [sortBy]: parseInt(sortOrder) } },
@@ -420,8 +435,7 @@ const getAllUsers = async (req, res) => {
     ]);
 
     const result = users[0] || {};
-    const totalItems =
-      result.totalCount.length > 0 ? result.totalCount[0].total : 0;
+    const totalItems = result.totalCount?.[0]?.total || 0;
     const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
 
     return res.status(200).json({
@@ -433,13 +447,15 @@ const getAllUsers = async (req, res) => {
       total: totalItems,
     });
   } catch (error) {
-    console.error("Error in fetching all users:", error);
+    console.log("Error in fetching all users", error);
+    console.log("Filter object:", filter);
     return res.status(500).json({
       success: false,
-      message: error?.message || "An error occurred while fetching users.",
+      message: error?.message,
     });
   }
 };
+
 
 const getUserProfile = async (req, res) => {
   try {
