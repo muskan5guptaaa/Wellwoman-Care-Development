@@ -16,9 +16,9 @@ const createMembershipPayment = async (req, res, next) => {
     // Validate doctor and amount
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Doctor not found" });
+      return res.status(404).json({ 
+        success: false, message: "Doctor not found" 
+    });
     }
     if (!amount || isNaN(amount) || amount <= 0) {
       return res.status(400).json({ 
@@ -26,7 +26,6 @@ const createMembershipPayment = async (req, res, next) => {
          message: "Invalid amount" 
         });
     }
-
     // Create a new membership payment record
     const membershipPayment = new Membership({
       doctorId,
@@ -36,7 +35,6 @@ const createMembershipPayment = async (req, res, next) => {
       status: "Pending",
     });
     await membershipPayment.save();
-
     // Create Razorpay order
     razorpay.orders.create(
         {

@@ -73,7 +73,6 @@ const Doctor=require("../models/doctorsModel");
           message: "Day, time slot, and appointment type are required.",
         });
       }
-  
       // Validate day
       const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
       if (!validDays.includes(day)) {
@@ -81,7 +80,6 @@ const Doctor=require("../models/doctorsModel");
           message: "Invalid day provided."
          });
       }
-  
       // Find the doctor
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
@@ -89,18 +87,15 @@ const Doctor=require("../models/doctorsModel");
            message: "Doctor not found."
            });
       }
-  
       // Check if the doctor has availability on the given day and appointmentType
       const availability = doctor.availability.find(
-        (slot) => slot.day === day && (slot.appointmentType === appointmentType || slot.appointmentType === "both" || slot.timeSlots===timeSlot)
+        (slot) => slot.day === day && (slot.appointmentType === appointmentType || slot.appointmentType === "both" )
       );
-  
       if (!availability) {
         return res.status(400).json({
           message: `Doctor is not available on ${day} for ${appointmentType} appointments.`,
         });
       }
-  
       // Check if the time slot is already booked by another user
       const existingAppointment = await Appointment.findOne({
         userId,
@@ -108,14 +103,12 @@ const Doctor=require("../models/doctorsModel");
         timeSlot,
         appointmentType,
       });
-  
       if (existingAppointment) {
         return res.status(400).json({
           message: "Time slot already booked by another user.",
-          existingAppointment, // Include the existing appointment details in the response
+          existingAppointment,
         });
       }
-  
       // Create a new appointment
       const newAppointment = new Appointment({
         userId,

@@ -57,7 +57,7 @@ const sendOtpDoctor = async (req, res) => {
 // Doctor signup
 const signUpDoctor = async (req, res) => {
     try {
-        const { name, email, password} = req.body;
+        const { name, email, password,phone} = req.body;
 
         // Check if the email or phone already exists
         let existingDoctor = await Doctor.findOne({ email });
@@ -477,6 +477,64 @@ const updateAvailabilityDoctor = async (req, res) => {
 };
 
 
+
+const getDoctorDetails = async (req, res) => {
+  try {
+    const doctorId = req.params.id; // Assuming doctor ID is passed in the URL
+
+    // Aggregation to retrieve doctor details
+    const doctorDetails = await Doctor.aggregate([
+      {
+        $match: { _id: mongoose.Types.ObjectId(doctorId) }, // Match the doctor by ID
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          specialization: 1,
+          experience: 1,
+          consultationFee: 1,
+          availability: 1, // Working times
+          profileImage: 1,
+          ratings: { $avg: "$ratings" }, // Example field for ratings
+          about: {
+            $concat: [
+              "Dr. ",
+              "$name",
+              " is a top specialist in ",
+              "$specialization",
+              ".",
+            ],
+          },
+          communication: [
+            { type: "Messaging", description: "Chat me up, share photos" },
+            { type: "Audio Call", description: "Call your doctor directly" },
+            { type: "Video Call", description: "See your doctor live" },
+          ],
+        },
+      },
+    ]);
+
+    // If no doctor is found
+    if (!doctorDetails || doctorDetails.length === 0) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+
+    // Return the doctor's details
+    res.status(200).json({
+      message: 'Doctor details fetched successfully',
+      data: doctorDetails[0], // Aggregation returns an array, so we take the first element
+    });
+  } catch (error) {
+    console.error('Error fetching doctor details:', error);
+    res.status(500).json({
+      message: 'An error occurred while fetching the doctor details',
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
     signUpDoctor,
     loginDoctor,
@@ -486,5 +544,6 @@ module.exports = {
     sendOtpDoctor,
     logoutDoctor,
     updateAvailabilityDoctor,
-    generateTimeSlots
+    generateTimeSlots,
+    getDoctorDetails
 };
