@@ -4,8 +4,7 @@ const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const authMiddleware = require("./middleware/authmiddleware"); 
 const userRoutes = require('./routes/userRoutes'); 
-
-
+const membershipRoutes=require('./routes/doctorMembershipRoute')
 const doctorRoutes = require('./routes/doctorsRoute');
 const kycRoute = require("./routes/kycRoute");
 const adminRoute = require("./routes/adminRoute");
@@ -29,7 +28,8 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use('/api', userRoutes);
 app.use('/api', doctorRoutes);
 app.use('/api', kycRoute);
-app.use('/api',adminRoute)
+app.use('/api',adminRoute);
+app.use('/api',membershipRoutes)
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
