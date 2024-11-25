@@ -29,6 +29,6 @@ const docmembershipSchema = new mongoose.Schema({
       default: Date.now, 
     },
   });
-  const Membership = mongoose.model('DoctorMembership', docmembershipSchema);
+  const DoctorMembership = mongoose.model('DoctorMembership', docmembershipSchema);
 
-  module.exports = Membership;
+  module.exports = DoctorMembership;
