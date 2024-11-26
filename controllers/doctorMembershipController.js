@@ -26,10 +26,11 @@ const createMembershipPayment = async (req, res, next) => {
         });
     }
     // Create a new membership payment record
-    const membershipPayment = new Membership({
-      doctorId,
+    const membershipPayment = new DoctorMembership({
+      doctorId:mongoose.Types.ObjectId(doctorId),
+      razorpay_order_id: order.id, // Save Razorpay Order ID
       amount,
-      transactionId: "nBoX60Pp7uCTv5mJxPpkdfty",
+      transactionId: "",
       paidAt: null,
       status: "Pending",
     });
@@ -39,8 +40,8 @@ const createMembershipPayment = async (req, res, next) => {
         {
           amount: amount * 100, // Amount in paisa
           currency: "INR",
-          receipt: `doc_${doctorId}_${Date.now()}`.slice(0, 40), // Shortened receipt
         },
+        
         (err, order) => {
           if (err) {
             console.error("Order creation error:", err);
@@ -69,10 +70,9 @@ const createMembershipPayment = async (req, res, next) => {
   }
 };
 
-
 const verifyDoctorMembershipPayment = async (req, res, next) => {
   const {
-    doctorDocId,
+    doctorId,
     razorpay_payment_id,
     razorpay_order_id,
     razorpay_signature,
@@ -81,14 +81,17 @@ const verifyDoctorMembershipPayment = async (req, res, next) => {
   try {
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac("sha256", "nBoX60Pp7uCTv5mJxPpkdfty") // Replace with your secret key
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
-      console.log(expectedSignature)
+
+    console.log("Verifying payment for doctorId:", doctorId);
+    console.log("Generated Signature:", expectedSignature);
+    console.log("Provided Signature:", razorpay_signature);
 
     if (expectedSignature === razorpay_signature) {
       const membershipPayment = await DoctorMembership.findOneAndUpdate(
-        { doctorDocId, status: "Pending" },
+        { doctorId, status: "Pending" },
         {
           transactionId: razorpay_payment_id,
           paidAt: new Date(),
@@ -124,9 +127,11 @@ const verifyDoctorMembershipPayment = async (req, res, next) => {
     });
   }
 };
+
 const getPaymentStatus = async (req, res, next) => {
-  const doctorDocId = req.doctorId;
-  try {DoctorMembership.findOne({ doctorDocId })
+  const {doctorId }= req.body;
+  try {
+    const membershipPayment= await DoctorMembership.findOne({ doctorId })
       .sort({ createdAt: -1 })
       .limit(1)
       .exec();
@@ -144,8 +149,8 @@ const getPaymentStatus = async (req, res, next) => {
       data: {
         status: membershipPayment.status,
         transactionId: membershipPayment.transactionId,
-        amount: membershipPayment.amount,
         paidAt: membershipPayment.paidAt,
+        amount:membershipPayment.amount,
         createdAt: membershipPayment.createdAt,
       },
     });

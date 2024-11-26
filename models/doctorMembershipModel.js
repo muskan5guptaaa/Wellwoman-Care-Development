@@ -22,12 +22,14 @@ const docmembershipSchema = new mongoose.Schema({
     },
     status: {
       type: String,
-      default: "Pending",
+      enum: ["Pending", "Completed", "Failed"],
+      required: true,
     },
+    
     createdAt: {
       type: Date,
       default: Date.now, 
-    },
+    }
   });
   const DoctorMembership = mongoose.model('DoctorMembership', docmembershipSchema);
 
