@@ -1,7 +1,8 @@
 const Joi = require("joi");
-const Rating = require("../models/Rating");  // Assuming you have a Rating model defined
-const { createRatingSV } = require("../validationSchemas/ratingValidation");  // Import your Joi schema
-
+const Rating = require("../models/ratingModel");  // Assuming you have a Rating model defined
+const User = require('../models/userModel');
+const mongoose = require("mongoose");
+const Doctor = require('../models/doctorsModel');
 
 const giveRating = async (req, res) => {
     const {
@@ -63,9 +64,99 @@ const giveRating = async (req, res) => {
     }
   };
   
+  const getRatings=async(req,res)=>{
+    try{
+           const {doctorId}=req.query;
+           if(!doctorId){
+            return res.status(400)
+            .json({message:"Doctor ID is required."})
+           }
+
+     
+    // Find ratings by businessProfileDocId
+    const ratings = await Rating.find({
+  doctorId: doctorId,
+      })
+        .populate("userDocId", "name email") // Optionally populate user details
+        .exec();
+  
+      return res.status(200).json({
+        success: true,
+        data: ratings,
+      });
+    } catch (error) {
+      console.error("Error fetching ratings:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error. Please try again later.",
+      });
+    }
+  };
   
 
+  const updateRating = async (req, res) => {
+    try {
+      const { ratingId } = req.params;
+      const updates = req.body;
+  
+      // Validate required fields
+      if (!mongoose.Types.ObjectId.isValid(ratingId)) {
+        return res.status(400).json({ message: "Invalid Rating ID." });
+      }
+  
+      // Find and update rating
+      const updatedRating = await Rating.findByIdAndUpdate(
+        ratingId,
+        { $set: updates },
+        { new: true, runValidators: true }
+      );
+  
+      if (!updatedRating) {
+        return res.status(404).json({ message: "Rating not found." });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        data: updatedRating,
+      });
+    } catch (error) {
+      console.error("Error updating rating:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error. Please try again later.",
+      });
+    }
+  };
+
+  const deleteRating=async(req,res)=>{
+    try{
+const{ratingId}=req.params;
+
+if(!mongoose.Types.ObjectId.isValid(ratingId)){
+    return res.status(400).json({message:"Invalid Rating Id"})
+}
+
+const deleteRating=await Rating.findById(ratingId);
+if(!deleteRating){
+    return res.status(404).json({message:"Rating Not Found"})
+}
+return res.status(200).json({
+success:true,
+message:"Rating deleted successfully"
+    })
+    }catch(error){
+        console.error("Error deleting rating:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+    }
+  
 
 module.exports = {
   giveRating,
+  getRatings,
+  updateRating,
+  deleteRating
 };

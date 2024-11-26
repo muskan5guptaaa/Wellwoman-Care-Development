@@ -8,7 +8,7 @@ const membershipRoutes=require('./routes/doctorMembershipRoute')
 const doctorRoutes = require('./routes/doctorsRoute');
 const kycRoute = require("./routes/kycRoute");
 const adminRoute = require("./routes/adminRoute");
-const ratingRoute=require("./routes/ratingRoute")
+const ratingRoute=require("./routes/ratingRoute");
 
 dotenv.config();
 const app = express();
