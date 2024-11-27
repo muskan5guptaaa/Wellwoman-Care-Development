@@ -4,7 +4,7 @@ const membershipController=require("../controllers/doctorMembershipController")
 
 
 router.post("/memebership/create-payment",membershipController.createMembershipPayment);
-router.post("/membership/verify",membershipController.verifyDoctorMembershipPayment)
+router.post("/membership/verify",membershipController.verifyMembershipPayment)
 
 router.post(
     "/membership/status",

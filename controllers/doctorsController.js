@@ -480,12 +480,12 @@ const updateAvailabilityDoctor = async (req, res) => {
 
 const getDoctorDetails = async (req, res) => {
   try {
-    const doctorId = req.params.id; // Assuming doctor ID is passed in the URL
+    const doctorId = req.params.id;
 
     // Aggregation to retrieve doctor details
     const doctorDetails = await Doctor.aggregate([
       {
-        $match: { _id: mongoose.Types.ObjectId(doctorId) }, // Match the doctor by ID
+        $match: { _id: mongoose.Types.ObjectId(doctorId) }, 
       },
       {
         $project: {
@@ -494,9 +494,9 @@ const getDoctorDetails = async (req, res) => {
           specialization: 1,
           experience: 1,
           consultationFee: 1,
-          availability: 1, // Working times
+          availability: 1, 
           profileImage: 1,
-          ratings: { $avg: "$ratings" }, // Example field for ratings
+          ratings: { $avg: "$ratings" }, 
           about: {
             $concat: [
               "Dr. ",

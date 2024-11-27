@@ -72,8 +72,7 @@ const giveRating = async (req, res) => {
             .json({message:"Doctor ID is required."})
            }
 
-     
-    // Find ratings by businessProfileDocId
+    // Find ratings by doctorId
     const ratings = await Rating.find({
   doctorId: doctorId,
       })
@@ -130,7 +129,7 @@ const giveRating = async (req, res) => {
 
   const deleteRating=async(req,res)=>{
     try{
-const{ratingId}=req.params;
+    const{ratingId}=req.params;
 
 if(!mongoose.Types.ObjectId.isValid(ratingId)){
     return res.status(400).json({message:"Invalid Rating Id"})

@@ -24,4 +24,13 @@ const giveRatingSV = Joi.object({
   }),
 });
 
+const updateRatingSV = Joi.object({
+  feedback: Joi.string().optional(),
+  images: Joi.array().items(Joi.string().uri()).optional(),
+  rating: Joi.number().min(1).max(5).optional().messages({
+    "number.min": "Rating must be at least 1.",
+    "number.max": "Rating can be at most 5.",
+  }),
+});
+
 module.exports = { giveRatingSV };

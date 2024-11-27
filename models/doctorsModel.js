@@ -13,12 +13,12 @@ const doctorSchema = new mongoose.Schema({
   phone: {
      type: String,
       required: true
-    },
+     },
     password:{
       type: String, 
       required: true,
      unique: true
-    },
+     },
     availability: [
       {
         day: { type: String, required: true },
@@ -28,7 +28,6 @@ const doctorSchema = new mongoose.Schema({
 
       },
     ],
-  
    address: {
       type: String,
       required: false,
@@ -57,26 +56,34 @@ const doctorSchema = new mongoose.Schema({
      required: true, 
      unique: true 
     },
-
   gender: { 
     type: String ,
     enum: ['Male', 'Female', 'Other']
-},
+    },
   qualification: { 
     type: String 
-},
-isKycVerified: {
+    },
+  isKycVerified: {
     type: Boolean,
     default: false,
+  },
+  isMembership:{
+      type:Boolean,
+      default:false,
+  },
+  latitude: {
+    type: String,
+  },
+  longitude: {
+    type: String,
   },
   experience: { 
     type: Number,
      default: 0
-     },
- 
+  },
   profileImage: { 
     type: String 
-},
+ },
 
 consultationFee: { 
   type: Number 

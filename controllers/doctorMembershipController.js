@@ -2,6 +2,7 @@ const Razorpay = require("razorpay");
 const Doctor = require("../models/doctorsModel");
 const DoctorMembership = require("../models/doctorMembershipModel");
 const crypto = require("crypto");
+const mongoose=require("mongoose")
 
 // Test API Key
 const razorpay = new Razorpay({
@@ -11,66 +12,61 @@ const razorpay = new Razorpay({
 
 const createMembershipPayment = async (req, res, next) => {
   const { doctorId, amount } = req.body;
+
   try {
-    // Validate doctor and amount
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).json({ 
-        success: false, message: "Doctor not found" 
-    });
-    }
     if (!amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-         message: "Invalid amount" 
-        });
+        message: "Invalid amount",
+      });
     }
-    // Create a new membership payment record
     const membershipPayment = new DoctorMembership({
-      doctorId:mongoose.Types.ObjectId(doctorId),
-      razorpay_order_id: order.id, // Save Razorpay Order ID
+      doctorId,
       amount,
       transactionId: "",
+ 
       paidAt: null,
       status: "Pending",
     });
+
     await membershipPayment.save();
-    // Create Razorpay order
+
     razorpay.orders.create(
-        {
-          amount: amount * 100, // Amount in paisa
-          currency: "INR",
-        },
-        
-        (err, order) => {
-          if (err) {
-            console.error("Order creation error:", err);
-            return res.status(400).json({
-              success: false,
-              message: "Order creation failed",
-              error: err,
-            });
-          }
-      
-          res.status(200).json({
-            success: true,
-            message: "Membership order created successfully",
-            order,
-            membershipPayment,
+      {
+        amount: amount * 100, // Razorpay accepts amount in paisa
+        currency: "INR",
+      },
+      (err, order) => {
+        if (err) {
+          console.error("Order creation error:", err);
+          return res.status(400).json({
+            success: false,
+            message: "Order creation failed",
+            error: err,
           });
         }
-      );
+
+        res.status(200).json({
+          success: true,
+          message: "Doctor membership payment initiated successfully",
+          order,
+          membershipPayment,
+        });
+      }
+    );
   } catch (error) {
-    console.error("Error creating membership payment:", error);
+    console.error("Error creating doctor membership payment:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to create membership payment",
+      message: "Failed to create membership order",
       error: error.message,
     });
   }
 };
 
-const verifyDoctorMembershipPayment = async (req, res, next) => {
+
+
+const verifyMembershipPayment = async (req, res, next) => {
   const {
     doctorId,
     razorpay_payment_id,
@@ -79,19 +75,37 @@ const verifyDoctorMembershipPayment = async (req, res, next) => {
   } = req.body;
 
   try {
+    // Ensure doctorId, payment_id, and order_id are provided
+    if (!doctorId || !razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+    // Validate if the payment_id and order_id are unique
+    const existingPayment = await DoctorMembership.findOne({
+      transactionId: razorpay_payment_id,
+    });
+    if (existingPayment) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment already verified",
+      });
+    }
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body.toString())
       .digest("hex");
 
-    console.log("Verifying payment for doctorId:", doctorId);
     console.log("Generated Signature:", expectedSignature);
     console.log("Provided Signature:", razorpay_signature);
 
     if (expectedSignature === razorpay_signature) {
       const membershipPayment = await DoctorMembership.findOneAndUpdate(
-        { doctorId, status: "Pending" },
+        { doctorId, 
+     
+          status: "Pending" },
         {
           transactionId: razorpay_payment_id,
           paidAt: new Date(),
@@ -106,7 +120,6 @@ const verifyDoctorMembershipPayment = async (req, res, next) => {
           message: "Payment record not found",
         });
       }
-
       res.status(200).json({
         success: true,
         message: "Payment verified successfully",
@@ -127,12 +140,13 @@ const verifyDoctorMembershipPayment = async (req, res, next) => {
     });
   }
 };
-
 const getPaymentStatus = async (req, res, next) => {
   const {doctorId }= req.body;
   try {
     const membershipPayment= await DoctorMembership.findOne({ doctorId })
-      .sort({ createdAt: -1 })
+      .sort({
+         createdAt: -1 
+        })
       .limit(1)
       .exec();
 
@@ -142,7 +156,6 @@ const getPaymentStatus = async (req, res, next) => {
         message: "No Payment Record Found",
       });
     }
-
     res.status(200).json({
       success: true,
       message: "Payment Details Retrieved Successfully",
@@ -166,6 +179,6 @@ const getPaymentStatus = async (req, res, next) => {
 
 module.exports = {
   createMembershipPayment,
-  verifyDoctorMembershipPayment,
+  verifyMembershipPayment,
   getPaymentStatus
 };
