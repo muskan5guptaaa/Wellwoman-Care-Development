@@ -389,24 +389,8 @@ const getAllUsers = async (req, res) => {
         $lte: new Date(endDate),
       };
     }
-
     const users = await User.aggregate([
       { $match: filter },
-      {
-        $lookup: {
-          from: "UserKyc", // Assuming KYC details are in a collection called 'UserKyc'
-          localField: "_id",
-          foreignField: "userId",
-          pipeline: [
-            {
-              $project: {
-                status: 1,
-              },
-            },
-          ],
-          as: "kycDetails",
-        },
-      },
       {
         $project: {
           _id: 1,

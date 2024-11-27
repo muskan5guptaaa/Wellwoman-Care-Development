@@ -339,8 +339,21 @@ const forgetPasswordDoctor = async (req, res) => {
                 } 
             ],
             as: "kycDetails",        
-          }
+          },
         },
+        {
+    $lookup:{
+      from:"DoctorMembership",
+      localField:"_id",
+      foreignField:"doctorId",
+      pipeline:[
+        {$sort:{createdAt:-1}},
+        {$limit:1},
+        {$project:{status:1}},,
+      ],
+      as:"memebershipDetails",
+    }
+   },
         {
           $project: {
             _id: 1,
@@ -357,6 +370,12 @@ const forgetPasswordDoctor = async (req, res) => {
             createdAt: 1,
             kycStatus: {
               $ifNull: [{ $arrayElemAt: ["$kycDetails.status", 0] }, "Not Found"]
+            },
+            memebershipStatus:{
+              $ifNull:[
+                {$arrayElemAt:["$memebershipDetails.status",0]},
+                "Not Found",
+              ]
             }
       
           },

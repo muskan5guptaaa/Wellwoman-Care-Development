@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema({
+    doctorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Doctor", 
+        required: true,
+      },
   title: {
     type: String,
     required: true,
@@ -9,7 +14,7 @@ const blogSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  tags: [String], // Array of tags for the blog
+  tags: [String],
   createdAt: {
     type: Date,
     default: Date.now,
@@ -18,11 +23,7 @@ const blogSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  doctorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Doctor", // Reference to the Doctor model
-    required: true,
-  },
+  
 });
 
 const Blog = mongoose.model("Blog", blogSchema);
