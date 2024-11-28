@@ -26,3 +26,5 @@ const doctorProfileSchema=new Schema({
   },
   
 })
+const Profile=mongoose.model("Profile",doctorProfileSchema)
+module.exports=Profile;
