@@ -1,51 +1,90 @@
 const mongoose=require("mongoose");
-const Profile=require("../models/doctorProfileModel")
-
-
+const Clinic=require("../models/clinicModel")
+const Doctor=require("../models/doctorsModel")
 // Create a hospital/clinic
-const createHospital = async (req, res) => {
-    try {
-      const { name, address, contact, facilities, doctorIds } = req.body;
-  
-      // Validate input
-      if (!name || !address || !contact) {
-        return res.status(400).json({
-          message: 'Name, address, and contact are required fields.',
-        });
+const createClinic = async (req, res) => {
+  try {
+      const { clinicName, clinicAddress, specialization, doctorId, rating } = req.body;
+
+      // Validate the required fields
+      if (!clinicName || !clinicAddress || !specialization || !doctorId) {
+          return res.status(400).json({ success: false, message: "All fields are required." });
       }
-  
-      // Verify doctor IDs (optional: ensure doctors exist in the database)
-      if (doctorIds && doctorIds.length > 0) {
-        const validDoctors = await Doctor.find({ _id: { $in: doctorIds } });
-        if (validDoctors.length !== doctorIds.length) {
-          return res.status(400).json({
-            message: 'Some doctor IDs are invalid.',
-          });
-        }
+
+      // Check if the doctor exists
+      const doctorExists = await Doctor.findById(doctorId);
+      if (!doctorExists) {
+          return res.status(404).json({ success: false, message: "Doctor not found." });
       }
-  
-      // Create a new hospital
-      const newHospital = new Hospital({
-        name,
-        address,
-        contact,
-        facilities,
-        doctors: doctorIds || [],
+
+      // Create the clinic
+      const newClinic = await Clinic.create({
+          name: clinicName,
+          address: clinicAddress,
+          specialization,
+          doctorId,
+          rating: rating || 0, // Default rating is 0 if not provided
       });
-  
-      // Save hospital to the database
-      await newHospital.save();
-  
-      res.status(201).json({
-        success: true,
-        message: 'Hospital created successfully.',
-        hospital: newHospital,
+
+      return res.status(201).json({
+          success: true,
+          message: "Clinic created successfully.",
+          data: newClinic,
       });
-    } catch (error) {
-      console.error('Error creating hospital:', error);
-      res.status(500).json({ message: 'Server error', error });
-    }
-  };
+  } catch (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
+const getNearbyClinics = async (req, res) => {
+  try {
+      const { latitude, longitude, radiusInKm } = req.query;
+
+      if (!latitude || !longitude || !radiusInKm) {
+          return res.status(400).json({ success: false, message: "Latitude, longitude, and radius are required." });
+      }
+
+      // Use geospatial query for nearby clinics
+      const clinics = await Clinic.aggregate([
+          {
+              $geoNear: {
+                  near: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+                  distanceField: "distance",
+                  maxDistance: radiusInKm * 1000,
+                  spherical: true,
+              },
+          },
+          {
+              $lookup: {
+                  from: "doctors",
+                  localField: "doctorId",
+                  foreignField: "_id",
+                  as: "doctorDetails",
+              },
+          },
+          {
+              $project: {
+                  name: 1,
+                  address: 1,
+                  specialization: 1,
+                  distance: 1,
+                  doctorDetails: { name: 1, consultationFee: 1 },
+              },
+          },
+      ]);
+
+      return res.status(200).json({ success: true, data: clinics });
+  } catch (err) {
+      console.log(err);
+      return res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
   
-  module.exports = { createHospital };
+  
+  module.exports = { createClinic,
+    getNearbyClinics
+    
+   };
   

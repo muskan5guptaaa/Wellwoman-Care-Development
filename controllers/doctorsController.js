@@ -552,6 +552,74 @@ const getDoctorDetails = async (req, res) => {
     });
   }
 };
+//Top rated dr 
+const getTopRatedDoctors = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query; // Default limit to 10 if not provided
+
+    // Perform aggregation to calculate average ratings and sort
+    const topRatedDoctors = await Rating.aggregate([
+      {
+        $group: {
+          _id: "$doctorId", // Group by doctorId
+          averageRating: { $avg: "$rating" }, // Calculate average rating
+          ratingCount: { $sum: 1 }, // Count the number of ratings
+        },
+      },
+      {
+        $lookup: {
+          from: "doctors", // Match the collection name for doctors
+          localField: "_id",
+          foreignField: "_id",
+          as: "doctorDetails",
+        },
+      },
+      {
+        $unwind: "$doctorDetails", // Unwind the doctor details array
+      },
+      {
+        $project: {
+          _id: 0,
+          doctorId: "$_id",
+          averageRating: 1,
+          ratingCount: 1,
+          "doctorDetails.name": 1,
+          "doctorDetails.specialty": 1,
+          "doctorDetails.experience": 1,
+          "doctorDetails.clinicAddress": 1,
+          "doctorDetails.city": 1,
+          "doctorDetails.state": 1,
+          "doctorDetails.country": 1,
+        },
+      },
+      {
+        $sort: { averageRating: -1, ratingCount: -1 }, // Sort by average rating and then by number of ratings
+      },
+      {
+        $limit: parseInt(limit), // Limit the number of results
+      },
+    ]);
+
+    if (topRatedDoctors.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No ratings available to determine top-rated doctors.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: topRatedDoctors,
+    });
+  } catch (error) {
+    console.error("Error fetching top-rated doctors:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};
+
 
 
 module.exports = {
@@ -564,5 +632,6 @@ module.exports = {
     logoutDoctor,
     updateAvailabilityDoctor,
     generateTimeSlots,
-    getDoctorDetails
+    getDoctorDetails,
+    getTopRatedDoctors
 };
