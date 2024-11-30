@@ -36,6 +36,35 @@ const createClinic = async (req, res) => {
   }
 };
 
+
+
+
+
+const getClinicById = async (req, res) => {
+    try {
+      const businessProfile = await Clinic.findById(req.params.id);
+  
+      if (!businessProfile) {
+        return res.status(404).json({
+          success: false,
+          message: "Clinic not found",
+        });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        data: businessProfile,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve business profile",
+        error: error.message,
+      });
+    }
+  };
+
+
 const getNearbyClinics = async (req, res) => {
   try {
       const { latitude, longitude, radiusInKm } = req.query;
@@ -105,15 +134,18 @@ const getNearbyClinics = async (req, res) => {
               },
           },
       ]);
-
-      return res.status(200).json({ success: true, data: clinics });
+      return res.status(200).json({ 
+        success: true,
+         data: clinics 
+        });
   } catch (err) {
       console.log(err);
-      return res.status(500).json({ success: false, message: "Internal Server Error." });
+      return res.status(500).json({
+         success: false, 
+         message: "Internal Server Error." 
+        });
   }
 };
-
-  
   module.exports = { createClinic,
     getNearbyClinics
     

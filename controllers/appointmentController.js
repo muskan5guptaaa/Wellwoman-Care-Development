@@ -3,7 +3,6 @@ const Doctor=require("../models/doctorsModel");
   const User=require("../models/userModel")
 
 
-
   const getDoctorSchedule = async (req, res) => {
     try {
       const { doctorId, date } = req.query;
@@ -22,24 +21,6 @@ const Doctor=require("../models/doctorsModel");
         return res.status(400).json({ 
             message: `Doctor is not available on ${dayOfWeek}`
          });
-      }
-      //  working hours 
-      const startTime = new Date(`${date}T09:00:00`);
-      const endTime = new Date(`${date}T17:00:00`);
-      // Generate 30-minute time slots
-      const timeSlots = [];
-      let currentTime = startTime;
-      while (currentTime < endTime) {
-        const nextSlot = new Date(currentTime.getTime() + 30 * 60000); // Add 30 minutes
-        timeSlots.push(
-          `${currentTime.toLocaleTimeString([], 
-          { hour: '2-digit', minute: '2-digit' })} - ${nextSlot.toLocaleTimeString([], 
-            {
-            hour: '2-digit', minute: '2-digit' 
-            }
-        )}`
-        );
-        currentTime = nextSlot;
       }
       // Fetch existing appointments for the doctor on the specified date
       const appointments = await Appointment.find({ doctorId, date });
