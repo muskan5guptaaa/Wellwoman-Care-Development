@@ -139,6 +139,7 @@ const verifyMembershipPayment = async (req, res, next) => {
     });
   }
 };
+
 const getPaymentStatus = async (req, res, next) => {
   const {doctorId }= req.body;
   try {

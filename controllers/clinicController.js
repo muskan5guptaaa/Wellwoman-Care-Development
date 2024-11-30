@@ -1,6 +1,9 @@
 const mongoose=require("mongoose");
 const Clinic=require("../models/clinicModel")
 const Doctor=require("../models/doctorsModel")
+const Rating = require("../models/ratingModel");
+
+
 // Create a hospital/clinic
 const createClinic = async (req, res) => {
   try {
@@ -20,7 +23,7 @@ const createClinic = async (req, res) => {
           address: clinicAddress,
           specialization,
           doctorId,
-          rating: rating || 0, // Default rating is 0 if not provided
+          rating: rating || 0, // Default rating is 0 
       });
       return res.status(201).json({
           success: true,
@@ -37,14 +40,19 @@ const getNearbyClinics = async (req, res) => {
   try {
       const { latitude, longitude, radiusInKm } = req.query;
       if (!latitude || !longitude || !radiusInKm) {
-          return res.status(400).json({ success: false, message: "Latitude, longitude, and radius are required." });
+          return res.status(400).json({
+             success: false,
+              message: "Latitude, longitude, and radius are required."
+             });
       }
-
       // Use geospatial query for nearby clinics
       const clinics = await Clinic.aggregate([
           {
               $geoNear: {
-                  near: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+                  near: {
+                    type: "Point",
+                    coordinates: [parseFloat(longitude),
+                   parseFloat(latitude)] },
                   distanceField: "distance",
                   maxDistance: radiusInKm * 1000,
                   spherical: true,

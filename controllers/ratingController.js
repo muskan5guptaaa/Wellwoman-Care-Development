@@ -33,7 +33,6 @@ const giveRating = async (req, res) => {
           message: "User not found",
         });
       }
-  
       // Create the new rating
       const newRating = new Rating({
         doctorId,

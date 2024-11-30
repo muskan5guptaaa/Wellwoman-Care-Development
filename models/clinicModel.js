@@ -1,3 +1,4 @@
+const { required } = require("joi");
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
@@ -11,17 +12,32 @@ const clinicSchema = new Schema({
       },
     address: { 
       type: String, 
-      required: true },
-    specialization: {
+      required: true 
+    },
+    city:{
+      type:String,
+      required:true
+    },
+    pincode: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    country: {
+      type: String,
+      required: true,
+    },
+     specialization: {
        type: String, 
        required: true },
-    location: {
-        type: { 
-          type: String,
-           default: 'Point' }, // 'Point' type for GeoJSON
-        coordinates: [Number], // [longitude, latitude]
+       location: {
+        type: { type: String, enum: ["Point"], required: true },
+        coordinates: { type: [Number], required: true },
       },
-      // Other fields as necessary
+    
     });
     
     clinicSchema.index({ location: '2dsphere' }); //

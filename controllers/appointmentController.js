@@ -18,7 +18,6 @@ const Doctor=require("../models/doctorsModel");
       const dayOfWeek = appointmentDate.toLocaleString('en-US', 
         { weekday: 'long' }
     );
-  
       if (!doctor.availability.days.includes(dayOfWeek)) {
         return res.status(400).json({ 
             message: `Doctor is not available on ${dayOfWeek}`
@@ -42,10 +41,8 @@ const Doctor=require("../models/doctorsModel");
         );
         currentTime = nextSlot;
       }
-  
       // Fetch existing appointments for the doctor on the specified date
       const appointments = await Appointment.find({ doctorId, date });
-  
       // Determine the status of each time slot
       const schedule = timeSlots.map((slot) => {
         const appointment = appointments.find((appt) => appt.timeSlot === slot);

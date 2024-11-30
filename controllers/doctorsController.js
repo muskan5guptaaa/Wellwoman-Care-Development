@@ -165,7 +165,7 @@ const editDoctorProfile = async (req, res) => {
         .join(" ");
     }
 
-    const validateReqBody = await updateDoctorProfileSV.validateAsync(req.body); // Assuming `updateDoctorProfileSV` is a validation schema
+    const validateReqBody = await updateDoctorProfileSV.validateAsync(req.body); 
     const doctorId = req.doctorId;
 
     const updatedDoctor = await Doctor.findByIdAndUpdate(doctorId, validateReqBody, {
@@ -219,7 +219,7 @@ const showDoctorProfile = async (req, res) => {
           gender: 1,
           latitude: { $ifNull: ["$latitude", ""] },
           longitude: { $ifNull: ["$longitude", ""] },
-          isVerified: 1, // Assuming doctors have a verification status
+          isVerified: 1, 
         },
       },
     ]);
@@ -236,7 +236,10 @@ const showDoctorProfile = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal Server Error" 
+    });
   }
 };
 
@@ -490,44 +493,24 @@ const forgetPasswordDoctor = async (req, res) => {
     }
   };
 
-  const generateTimeSlots = (startTime, endTime) => {
-    const slots = [];
-    const start = new Date(`1970-01-01T${startTime}:00`);
-    const end = new Date(`1970-01-01T${endTime}:00`);
-  
-    if (start >= end) {
-      return slots;
-    }
-  
-    let current = start;
-    while (current < end) {
-      const next = new Date(current.getTime() + 30 * 60000); // Add 30 minutes
-      slots.push(`${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`);
-      current = next;
-    }
-    return slots;
-  };
   
 // Update Doctor's Availability
 const updateAvailabilityDoctor = async (req, res) => {
   try {
-    const { doctorId } = req.params; // Doctor ID from request parameters
-    const { days, startTime, endTime, appointmentType } = req.body; // Days, times, and appointment type from request body
-
+    const { doctorId } = req.params; 
+    const { days, startTime, endTime, appointmentType } = req.body; 
     // Validate input
     if (!startTime || !endTime || !appointmentType) {
       return res
         .status(400)
         .json({ message: "Start time, end time, and appointment type are required." });
     }
-
     // Validate days
     const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     const isValidDays = days.every((day) => validDays.includes(day));
     if (!isValidDays) {
       return res.status(400).json({ message: "Invalid day(s) provided." });
     }
-
     // Helper function to generate 30-minute time slots
     const generateTimeSlots = (startTime, endTime) => {
       const slots = [];
@@ -546,8 +529,6 @@ const updateAvailabilityDoctor = async (req, res) => {
       }
       return slots;
     };
-
-    // Generate availability with time slots
     const availability = days.map((day) => ({
       day,
       timeSlots: generateTimeSlots(startTime, endTime),
@@ -621,7 +602,7 @@ const getDoctorDetails = async (req, res) => {
     // Return the doctor's details
     res.status(200).json({
       message: 'Doctor details fetched successfully',
-      data: doctorDetails[0], // Aggregation returns an array, so we take the first element
+      data: doctorDetails[0], 
     });
   } catch (error) {
     console.error('Error fetching doctor details:', error);
@@ -631,30 +612,31 @@ const getDoctorDetails = async (req, res) => {
     });
   }
 };
+
+
 //Top rated dr 
 const getTopRatedDoctors = async (req, res) => {
   try {
     const { limit = 10 } = req.query; // Default limit to 10 if not provided
 
-    // Perform aggregation to calculate average ratings and sort
     const topRatedDoctors = await Rating.aggregate([
       {
         $group: {
-          _id: "$doctorId", // Group by doctorId
+          _id: "$doctorId", 
           averageRating: { $avg: "$rating" }, // Calculate average rating
           ratingCount: { $sum: 1 }, // Count the number of ratings
         },
       },
       {
         $lookup: {
-          from: "doctors", // Match the collection name for doctors
+          from: "doctors", 
           localField: "_id",
           foreignField: "_id",
           as: "doctorDetails",
         },
       },
       {
-        $unwind: "$doctorDetails", // Unwind the doctor details array
+        $unwind: "$doctorDetails", 
       },
       {
         $project: {
@@ -675,7 +657,7 @@ const getTopRatedDoctors = async (req, res) => {
         $sort: { averageRating: -1, ratingCount: -1 }, // Sort by average rating and then by number of ratings
       },
       {
-        $limit: parseInt(limit), // Limit the number of results
+        $limit: parseInt(limit),
       },
     ]);
 
@@ -712,7 +694,6 @@ module.exports = {
     sendOtpDoctor,
     logoutDoctor,
     updateAvailabilityDoctor,
-    generateTimeSlots,
     getDoctorDetails,
     getTopRatedDoctors
 };
