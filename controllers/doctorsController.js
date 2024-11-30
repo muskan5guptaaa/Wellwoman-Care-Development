@@ -104,7 +104,6 @@ const signUpDoctor = async (req, res) => {
 const loginDoctor = async (req, res) => {
     try {
         const { email, password } = req.body;
-
         // Validate input fields
         if (!email || !password) {
             return res.status(400).json({
@@ -112,7 +111,6 @@ const loginDoctor = async (req, res) => {
                 message: 'Email and password are required'
             });
         }
-
         // Check if the doctor exists in the database
         const doctor = await Doctor.findOne({ email });
         if (!doctor || !doctor.password) {
@@ -121,7 +119,6 @@ const loginDoctor = async (req, res) => {
                 message: 'Invalid email or password'
             });
         }
-
         // Compare provided password with the hashed password in the database
         const isMatch = await bcrypt.compare(password, doctor.password);
         if (!isMatch) {
@@ -130,16 +127,12 @@ const loginDoctor = async (req, res) => {
                 message: 'Invalid email or password'
             });
         }
-
         // Generate a JWT token for the authenticated doctor
         const token = jwt.sign(
             { doctorId: doctor._id, email: doctor.email },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: '1h' }
         );
-
-    
-
         // Store the generated token in the Token collection for session tracking
         await Token.create({
             token: token,
@@ -161,6 +154,92 @@ const loginDoctor = async (req, res) => {
         });
     }
 };
+const editDoctorProfile = async (req, res) => {
+  try {
+    if (req.body.name) {
+      req.body.name = req.body.name
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+    }
+
+    const validateReqBody = await updateDoctorProfileSV.validateAsync(req.body); // Assuming `updateDoctorProfileSV` is a validation schema
+    const doctorId = req.doctorId;
+
+    const updatedDoctor = await Doctor.findByIdAndUpdate(doctorId, validateReqBody, {
+      new: true,
+    });
+
+    if (!updatedDoctor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      doctor: updatedDoctor,
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.isJoi) {
+      return res.status(400).json({
+        success: false,
+        message: err.details[0].message,
+      });
+    }
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+
+const showDoctorProfile = async (req, res) => {
+  try {
+    const doctorId = req.doctorId;
+
+    const doctor = await Doctor.aggregate([
+      { $match: { _id: doctorId } },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          phone: 1,
+          avatar: { $ifNull: ["$avatar", ""] },
+          specialization: { $ifNull: ["$specialization", ""] },
+          experience: { $ifNull: ["$experience", ""] },
+          consultationFee: { $ifNull: ["$consultationFee", ""] },
+          address: { $ifNull: ["$address", ""] },
+          city: { $ifNull: ["$city", ""] },
+          pincode: { $ifNull: ["$pincode", ""] },
+          state: { $ifNull: ["$state", ""] },
+          country: { $ifNull: ["$country", ""] },
+          gender: 1,
+          latitude: { $ifNull: ["$latitude", ""] },
+          longitude: { $ifNull: ["$longitude", ""] },
+          isVerified: 1, // Assuming doctors have a verification status
+        },
+      },
+    ]);
+
+    if (doctor.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: doctor[0],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 
 const forgetPasswordDoctor = async (req, res) => {
     try {
@@ -627,6 +706,8 @@ module.exports = {
     loginDoctor,
     forgetPasswordDoctor,
     changePasswordDoctor,
+    editDoctorProfile,
+    showDoctorProfile,
     getAllDoctors,
     sendOtpDoctor,
     logoutDoctor,

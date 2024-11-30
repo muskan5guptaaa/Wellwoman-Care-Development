@@ -24,7 +24,6 @@ const createMembershipPayment = async (req, res, next) => {
       doctorId,
       amount,
       transactionId: "",
- 
       paidAt: null,
       status: "Pending",
     });
