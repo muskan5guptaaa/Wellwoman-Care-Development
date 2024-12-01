@@ -497,21 +497,19 @@ const forgetPasswordDoctor = async (req, res) => {
 // Update Doctor's Availability
 const updateAvailabilityDoctor = async (req, res) => {
   try {
-    const { doctorId } = req.params; 
-    const { days, startTime, endTime, appointmentType } = req.body; 
-    // Validate input
+    const { doctorId } = req.params;
+    const { days, startTime, endTime, appointmentType } = req.body;
+
     if (!startTime || !endTime || !appointmentType) {
-      return res
-        .status(400)
-        .json({ message: "Start time, end time, and appointment type are required." });
+      return res.status(400).json({ message: "Start time, end time, and appointment type are required." });
     }
-    // Validate days
+
     const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     const isValidDays = days.every((day) => validDays.includes(day));
     if (!isValidDays) {
       return res.status(400).json({ message: "Invalid day(s) provided." });
     }
-    // Helper function to generate 30-minute time slots
+
     const generateTimeSlots = (startTime, endTime) => {
       const slots = [];
       const start = new Date(`1970-01-01T${startTime}:00`);
@@ -523,19 +521,19 @@ const updateAvailabilityDoctor = async (req, res) => {
 
       let current = start;
       while (current < end) {
-        const next = new Date(current.getTime() + 30 * 60000); // Add 30 minutes
+        const next = new Date(current.getTime() + 30 * 60000);
         slots.push(`${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`);
         current = next;
       }
       return slots;
     };
+
     const availability = days.map((day) => ({
       day,
       timeSlots: generateTimeSlots(startTime, endTime),
       appointmentType,
     }));
 
-    // Find the doctor and update their availability
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
@@ -554,7 +552,6 @@ const updateAvailabilityDoctor = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error });
   }
 };
-
 
 
 const getDoctorDetails = async (req, res) => {

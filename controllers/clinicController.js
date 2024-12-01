@@ -42,9 +42,9 @@ const createClinic = async (req, res) => {
 
 const getClinicById = async (req, res) => {
     try {
-      const businessProfile = await Clinic.findById(req.params.id);
+      const Clinic = await Clinic.findById(req.params.id);
   
-      if (!businessProfile) {
+      if (!clinic) {
         return res.status(404).json({
           success: false,
           message: "Clinic not found",
