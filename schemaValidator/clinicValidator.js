@@ -17,6 +17,8 @@ const nearbyClinicsSV=Joi.object({
       state: Joi.string().required(),
       country: Joi.string().required(),
       images: Joi.array().items(Joi.string().uri()).optional(),
+      doctorId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(), // Ensure doctorId is a valid ObjectId
+
 
 
 })

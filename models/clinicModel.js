@@ -34,7 +34,7 @@ const clinicSchema = new Schema({
     images:[String],
      specialization: {
        type: String, 
-       required: true },
+     },
        location: {
         type: { type: String, enum: ["Point"], required: true },
         coordinates: { type: [Number], required: true },
