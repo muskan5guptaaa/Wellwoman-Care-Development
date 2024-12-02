@@ -9,6 +9,7 @@ const clinicSchema = new Schema({
     doctorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Doctor",
+        required:true,
       },
     address: { 
       type: String, 
@@ -30,6 +31,7 @@ const clinicSchema = new Schema({
       type: String,
       required: true,
     },
+    images:[String],
      specialization: {
        type: String, 
        required: true },
@@ -43,8 +45,6 @@ const clinicSchema = new Schema({
     clinicSchema.index({ location: '2dsphere' }); //
     
 
-// Ensure the location field is indexed for geospatial queries
-clinicSchema.index({ location: "2dsphere" });
 
 const Clinic = mongoose.model("Clinic", clinicSchema);
 

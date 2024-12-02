@@ -375,6 +375,7 @@ const forgetPasswordDoctor = async (req, res) => {
   };
   
   const getAllDoctors = async (req, res) => {
+    const filter = {};
     try {
       const {
         search,
@@ -390,8 +391,6 @@ const forgetPasswordDoctor = async (req, res) => {
         sortOrder = 1,
       } = req.query;
   
-      const filter = {};
-  
       if (search) {
         const regex = new RegExp(search, "i");
         filter.$or = [
@@ -400,7 +399,6 @@ const forgetPasswordDoctor = async (req, res) => {
           { email: { $regex: regex } },
         ];
       }
-  
       if (startDate && endDate) {
         filter.createdAt = {
           $gte: new Date(startDate),
@@ -431,7 +429,7 @@ const forgetPasswordDoctor = async (req, res) => {
       pipeline:[
         {$sort:{createdAt:-1}},
         {$limit:1},
-        {$project:{status:1}},,
+        {$project:{status:1}},
       ],
       as:"memebershipDetails",
     }

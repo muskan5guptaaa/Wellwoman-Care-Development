@@ -18,6 +18,7 @@ router.post('/doctor/logout', isDoctorAuth, doctorController.logoutDoctor);
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
 router.post("/doctor/:doctorId/book", appointmentController.bookAppointment);
 router.get("/doctor/schedule",appointmentController.getDoctorSchedule)
+router.get("/doctor/all/:doctorId",appointmentController.getAllAppointmentsForDoctor)
 
 // Bank details routes
 router.post("/doctor/bank-details", createBankDetail);

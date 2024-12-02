@@ -82,6 +82,18 @@ const Doctor=require("../models/doctorsModel");
         return res.status(400).json({ message: "Time slot is already booked." });
       }
   
+      // Process based on appointment type
+      let meetingLink = null;
+      let doctorAddress = null;
+  
+      if (appointmentType === "online") {
+        // Generate or fetch a Zoom/Google Meet link
+        meetingLink = `https://zoom.us/j/${Math.floor(Math.random() * 100000000)}`; // Example Zoom link
+      } else if (appointmentType === "offline") {
+        // Return doctor's address
+        doctorAddress = doctor.address;
+      }
+  
       // Book the appointment
       const newAppointment = new Appointment({
         doctorId,
@@ -89,13 +101,20 @@ const Doctor=require("../models/doctorsModel");
         date,
         timeSlot,
         appointmentType,
+        meetingLink,
       });
+  
       await newAppointment.save();
   
+      // Respond with appointment details and additional information
       res.status(201).json({
         success: true,
         message: "Appointment booked successfully.",
         appointment: newAppointment,
+        additionalInfo: {
+          meetingLink: meetingLink || null,
+          doctorAddress: doctorAddress || null,
+        },
       });
     } catch (error) {
       console.error("Error booking appointment:", error);
@@ -103,8 +122,6 @@ const Doctor=require("../models/doctorsModel");
     }
   };
   
-
-
 
   const getAllAppointmentsForDoctor = async (req, res) => {
     try {
@@ -123,8 +140,8 @@ const Doctor=require("../models/doctorsModel");
   
       // Fetch all appointments for the doctor
       const appointments = await Appointment.find({ doctorId })
-        .populate("userId", "name email phone") // Assuming userId refers to a User model
-        .sort({ date: 1, timeSlot: 1 }); // Sort by date and timeSlot
+        .populate("userId", "name email phone") 
+        .sort({ date: 1, timeSlot: 1 }); 
   
       if (appointments.length === 0) {
         return res.status(200).json({ message: "No appointments found for this doctor." });
@@ -143,6 +160,8 @@ const Doctor=require("../models/doctorsModel");
   };
 
   
+
+
 //for cancel appointment
   const cancelAppointment = async (req, res) => {
     try {
@@ -175,5 +194,6 @@ const Doctor=require("../models/doctorsModel");
 module.exports={
     getDoctorSchedule,
     bookAppointment,
-    cancelAppointment
+    cancelAppointment,
+    getAllAppointmentsForDoctor
 }  
