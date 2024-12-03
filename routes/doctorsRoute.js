@@ -13,6 +13,7 @@ router.post('/doctor/forgetPasswordDoctor', doctorController.forgetPasswordDocto
 router.post('/doctor/changePassword', doctorController.changePasswordDoctor);
 router.post('/doctor/sendOtp', doctorController.sendOtpDoctor);
 router.post('/doctor/logout', isDoctorAuth, doctorController.logoutDoctor);
+router.get("/doctor/nearby",clinicController.getNearbyClinics);
 
 // Doctor availability and appointments
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
@@ -27,8 +28,8 @@ router.put("/doctor/update/:doctorId", updateBankDetail);
 router.delete("/doctor/delete/:doctorId", deleteBankDetail);
 
 // Nearby doctors
-router.get("/doctor/nearby",clinicController.getNearbyClinics);
 router.post("/doctor/clinic",clinicController.createClinic)
+router.get("/doctor/:doctorId",clinicController.getClinicById)
 // Admin routes
 router.get('/admin/getAllDoctors', doctorController.getAllDoctors);
 

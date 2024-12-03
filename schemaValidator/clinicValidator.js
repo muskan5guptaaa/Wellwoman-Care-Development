@@ -10,6 +10,7 @@ const nearbyClinicsSV=Joi.object({
           .items(Joi.number().required())
           .length(2)
           .required(),
+          
       }).required(),
       address: Joi.string().required(),
       city: Joi.string().required(),
