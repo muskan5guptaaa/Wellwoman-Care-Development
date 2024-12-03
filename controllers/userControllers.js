@@ -50,9 +50,6 @@ const sendOtpUser = async (req, res) => {
     }
 };
 
-
-
-
 //For signup
 const signUpUser = async (req, res) => {
     try {
