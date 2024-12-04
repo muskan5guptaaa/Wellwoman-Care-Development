@@ -55,7 +55,7 @@ const signUpUser = async (req, res) => {
     try {
       // Validate request body using a schema validator
       const validateReqBody = await signUpUserSV.validateAsync(req.body);
-      const { email, password, name ,phone} = validateReqBody;
+      const { email, password, name} = validateReqBody;
   
       // Check if the email and phone already exists
       let existingUser = await User.findOne({ email: email, phone: phone });
@@ -136,6 +136,25 @@ const signUpUser = async (req, res) => {
       expired_at: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
     });
 
+     // Use aggregation to find the user and provide default values
+     const userDetails = await User.aggregate([
+      { $match: { _id: user._id } },
+      {
+        $project: {
+          address: { $ifNull: ["$address", ""] },
+          city: { $ifNull: ["$city", ""] },
+          pincode: { $ifNull: ["$pincode", ""] },
+          state: { $ifNull: ["$state", ""] },
+          country: { $ifNull: ["$country", ""] },
+          email: 1,
+          phone: 1,
+          username: 1,
+          name: 1,
+          avatar: { $ifNull: ["$avatar", ""] },
+          gender: 1,
+        },
+      },
+    ]);
     // Check if the token was saved
     const savedToken = await Token.findOne({ token: token });
     if (!savedToken) {
@@ -144,21 +163,28 @@ const signUpUser = async (req, res) => {
         message: "Token not saved in database",
       });
     }
-        // If login is successful, return the token
-        return res.status(200).json({
-          userDocId: user._id,
-            success: true,
-            message: 'Login successful',
-            token: token
-        });
-
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
+      
+    res.status(200).json({
+      success: true,
+      userDocId: user._id,
+      token: token,
+      data: userDetails[0],
+      message: "Logged in successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    if (err.isJoi) {
+      // Handle validation error
+      return res.status(400).json({
+        success: false,
+        message: err.details[0].message,
+      });
     }
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 };
 
     //Generate new password
@@ -235,12 +261,12 @@ const forgetPassword = async (req, res) => {
 
     // Create the reset link
     const resetLink = `https://your-frontend-url/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    await sendPasswordResetEmail(email, resetLink);
 
 
     return res.status(200).json({
       success: true,
       message: 'Password reset link sent successfully',
-      resetLink, // You can also send this for testing purposes, but be cautious about exposing sensitive information.
     });
 
   } catch (error) {
