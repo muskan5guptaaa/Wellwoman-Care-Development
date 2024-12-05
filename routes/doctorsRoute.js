@@ -12,14 +12,12 @@ router.post('/doctor/login', doctorController.loginDoctor);
 router.post('/doctor/forgetPasswordDoctor', doctorController.forgetPasswordDoctor);
 router.post('/doctor/changePassword', doctorController.changePasswordDoctor);
 router.post('/doctor/sendOtp', doctorController.sendOtpDoctor);
-router.post('/doctor/logout', isDoctorAuth, doctorController.logoutDoctor);
+router.post('/doctor/logout',  doctorController.logoutDoctor);
 router.get("/doctor/nearby",clinicController.getNearbyClinics);
 
 // Doctor availability and appointments
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
-router.post("/doctor/:doctorId/book", appointmentController.bookAppointment);
-router.get("/doctor/schedule",appointmentController.getDoctorSchedule)
-router.get("/doctor/all/:doctorId",appointmentController.getAllAppointmentsForDoctor)
+
 
 // Bank details routes
 router.post("/doctor/bank-details", createBankDetail);

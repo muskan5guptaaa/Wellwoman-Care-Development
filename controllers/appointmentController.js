@@ -1,4 +1,4 @@
-const Appointment = require("../models/appointment.model");
+const Appointment = require("../models/appointmentModel");
 const Doctor=require("../models/doctorsModel");
   const User=require("../models/userModel")
 
@@ -26,7 +26,8 @@ const Doctor=require("../models/doctorsModel");
           status: isBooked ? "Booked" : "Available",
         };
       });
-  
+
+
       res.status(200).json({ schedule });
     } catch (error) {
       console.error("Error fetching doctor schedule:", error);
@@ -35,19 +36,16 @@ const Doctor=require("../models/doctorsModel");
   };
   
   // Book Appointment Controller
-
   const bookAppointment = async (req, res) => {
     try {
-      const { doctorId, userId, date, timeSlot, appointmentType } = req.body;
-  
+      const { doctorId, userId, date, timeSlot, appointmentType,problemDescription } = req.body;
       // Validate inputs
       if (!doctorId || !userId || !date || !timeSlot || !appointmentType) {
         return res.status(400).json({ message: "All fields are required." });
       }
-  
       // Convert date to the day of the week
       const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
-  
+
       // Check if the doctor exists
       const doctor = await Doctor.findById(doctorId);
       if (!doctor) {
@@ -102,6 +100,7 @@ const Doctor=require("../models/doctorsModel");
         timeSlot,
         appointmentType,
         meetingLink,
+        problemDescription
       });
   
       await newAppointment.save();
@@ -123,30 +122,28 @@ const Doctor=require("../models/doctorsModel");
   };
   
 
-  const getAllAppointmentsForDoctor = async (req, res) => {
+  const getAllAppointmentsForUser = async (req, res) => {
     try {
-      const { doctorId } = req.params;
+      const { userId } = req.params;
   
       // Validate if doctorId is provided
-      if (!doctorId) {
+      if (!userId) {
         return res.status(400).json({ message: "Doctor ID is required." });
       }
   
       // Check if the doctor exists
-      const doctor = await Doctor.findById(doctorId);
-      if (!doctor) {
+      const user = await User.findById(userId);
+      if (!user) {
         return res.status(404).json({ message: "Doctor not found." });
       }
-  
       // Fetch all appointments for the doctor
-      const appointments = await Appointment.find({ doctorId })
-        .populate("userId", "name email phone") 
+      const appointments = await Appointment.find({ userId })
+        .populate("doctorId", "name email phone specialization") 
         .sort({ date: 1, timeSlot: 1 }); 
   
       if (appointments.length === 0) {
         return res.status(200).json({ message: "No appointments found for this doctor." });
       }
-  
       // Respond with the appointments
       res.status(200).json({
         success: true,
@@ -160,40 +157,13 @@ const Doctor=require("../models/doctorsModel");
   };
 
   
-
-
 //for cancel appointment
-  const cancelAppointment = async (req, res) => {
-    try {
-      const { appointmentId, userId } = req.body;
-  
-      // Check if the appointment exists
-      const appointment = await Appointment.findById(appointmentId);
-      if (!appointment) {
-        return res.status(404).json({ message: "Appointment not found" });
-      }
-  
-      // Ensure the appointment belongs to the user
-      if (appointment.userId.toString() !== userId) {
-        return res.status(403).json({ message: "You are not authorized to cancel this appointment" });
-      }
-  
-      // Delete the appointment
-      await Appointment.findByIdAndDelete(appointmentId);
-  
-      res.status(200).json({
-        success: true,
-        message: "Appointment canceled successfully",
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Server error", error });
-    }
-  };
+
+
+
   
 module.exports={
     getDoctorSchedule,
     bookAppointment,
-    cancelAppointment,
-    getAllAppointmentsForDoctor
+    getAllAppointmentsForUser
 }  

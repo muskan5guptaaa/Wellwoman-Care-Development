@@ -23,6 +23,7 @@ availability: {
       required: true
   },
 },
+problemDescription: { type: String },
 
   timeSlot: {
     type: String, 

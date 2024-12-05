@@ -7,6 +7,7 @@ const Token = require("../models/tokenmodel");
 const axios = require('axios');
 const {forgetPasswordDoctorSV,sendOtpSV} = require('../schemaValidator/doctorValidator');
 const { generateOTP } = require('../utils/sendOtp');
+const mongoose=require("mongoose")
 
 
 const sendOtpDoctor = async (req, res) => {
@@ -91,6 +92,7 @@ const signUpDoctor = async (req, res) => {
             consultationFee
             
         });
+        
 
         return res.status(201).json({ success: true, message: "Doctor registered successfully." });
     } catch (err) {
@@ -552,61 +554,6 @@ const updateAvailabilityDoctor = async (req, res) => {
 };
 
 
-const getDoctorDetails = async (req, res) => {
-  try {
-    const doctorId = req.params.id;
-
-    // Aggregation to retrieve doctor details
-    const doctorDetails = await Doctor.aggregate([
-      {
-        $match: { _id: mongoose.Types.ObjectId(doctorId) }, 
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          specialization: 1,
-          experience: 1,
-          consultationFee: 1,
-          availability: 1, 
-          profileImage: 1,
-          ratings: { $avg: "$ratings" }, 
-          about: {
-            $concat: [
-              "Dr. ",
-              "$name",
-              " is a top specialist in ",
-              "$specialization",
-              ".",
-            ],
-          },
-          communication: [
-            { type: "Messaging", description: "Chat me up, share photos" },
-            { type: "Audio Call", description: "Call your doctor directly" },
-            { type: "Video Call", description: "See your doctor live" },
-          ],
-        },
-      },
-    ]);
-
-    // If no doctor is found
-    if (!doctorDetails || doctorDetails.length === 0) {
-      return res.status(404).json({ message: 'Doctor not found' });
-    }
-
-    // Return the doctor's details
-    res.status(200).json({
-      message: 'Doctor details fetched successfully',
-      data: doctorDetails[0], 
-    });
-  } catch (error) {
-    console.error('Error fetching doctor details:', error);
-    res.status(500).json({
-      message: 'An error occurred while fetching the doctor details',
-      error: error.message,
-    });
-  }
-};
 
 
 //Top rated dr 
@@ -689,6 +636,5 @@ module.exports = {
     sendOtpDoctor,
     logoutDoctor,
     updateAvailabilityDoctor,
-    getDoctorDetails,
     getTopRatedDoctors
 };
