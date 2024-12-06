@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const OTP=require("../models/otpModel")
 const Token = require("../models/tokenmodel");
 const axios = require('axios');
+const Rating=require("../models/ratingModel")
 const {forgetPasswordDoctorSV,sendOtpSV} = require('../schemaValidator/doctorValidator');
 const { generateOTP } = require('../utils/sendOtp');
 const mongoose=require("mongoose")
@@ -587,7 +588,7 @@ const getTopRatedDoctors = async (req, res) => {
           averageRating: 1,
           ratingCount: 1,
           "doctorDetails.name": 1,
-          "doctorDetails.specialty": 1,
+          "doctorDetails.specialization": 1,
           "doctorDetails.experience": 1,
           "doctorDetails.clinicAddress": 1,
           "doctorDetails.city": 1,
@@ -623,6 +624,46 @@ const getTopRatedDoctors = async (req, res) => {
   }
 };
 
+const getDoctorDetails = async (req, res) => {
+  try {
+    const { doctorId } = req.query; // Get doctor ID from the route parameter
+
+    const doctor = await Doctor.findById(doctorId).select(
+      "name specialization availability"
+    );
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found",
+      });
+    }
+
+    // Format the response with only the necessary details
+    const doctorDetails = {
+      name: doctor.name,
+      specialization: doctor.specialization,
+      availability: doctor.availability.map((slot) => ({
+        day: slot.day,
+        timeSlots: slot.timeSlots,
+        appointmentType: slot.appointmentType,
+      })),
+    };
+
+    res.status(200).json({
+      success: true,
+      data: doctorDetails,
+    });
+  } catch (error) {
+    console.error("Error fetching doctor details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
+  }
+};
+
+
 
 
 module.exports = {
@@ -636,5 +677,6 @@ module.exports = {
     sendOtpDoctor,
     logoutDoctor,
     updateAvailabilityDoctor,
-    getTopRatedDoctors
+    getTopRatedDoctors,
+    getDoctorDetails
 };

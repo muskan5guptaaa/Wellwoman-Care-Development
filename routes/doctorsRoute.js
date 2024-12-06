@@ -5,7 +5,8 @@ const appointmentController = require("../controllers/appointmentController");
 const { isDoctorAuth } = require('../middleware/authmiddleware');
 const { createBankDetail, getBankDetails, updateBankDetail, deleteBankDetail } = require('../controllers/bankdetailsController');
 const clinicController = require("../controllers/clinicController");
-
+router.get("/user/toprating",doctorController.getTopRatedDoctors)
+router.get("/user/detail",doctorController.getDoctorDetails)
 // Doctor signup routes
 router.post('/doctor/signup', doctorController.signUpDoctor);
 router.post('/doctor/login', doctorController.loginDoctor);
@@ -14,6 +15,7 @@ router.post('/doctor/changePassword', doctorController.changePasswordDoctor);
 router.post('/doctor/sendOtp', doctorController.sendOtpDoctor);
 router.post('/doctor/logout',  doctorController.logoutDoctor);
 router.get("/doctor/nearby",clinicController.getNearbyClinics);
+
 
 // Doctor availability and appointments
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
