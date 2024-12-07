@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const adminSchema = new mongoose.Schema({
+  name: {
+    type: String,
+  },
   phone: {
     type: String,
   },
@@ -17,15 +20,9 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
   },
-  name: {
-    type: String,
-  },
+  
   avatar: {
     type: String,
-  },
-  gender: {
-    type: String,
-    enum: ["male", "female", "other"],
   },
   address: {
     type: String,
@@ -40,16 +37,17 @@ const adminSchema = new mongoose.Schema({
 });
 
 adminSchema.methods.generateToken = function () {
-    return jwt.sign(
-      {
-        _id: this.id,
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-      }
-    );
-  };
+  return jwt.sign(
+    {
+      _id: this.id,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
+};
+
  
 
 const Admin = mongoose.model("Admin", adminSchema);

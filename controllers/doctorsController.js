@@ -638,15 +638,14 @@ const getDoctorDetails = async (req, res) => {
         message: "Doctor not found",
       });
     }
-
-    // Format the response with only the necessary details
     const doctorDetails = {
+      clinicId: newClinic._id, 
       name: doctor.name,
       specialization: doctor.specialization,
       availability: doctor.availability.map((slot) => ({
-        day: slot.day,
-        timeSlots: slot.timeSlots,
-        appointmentType: slot.appointmentType,
+      day: slot.day,
+      timeSlots: slot.timeSlots,
+      appointmentType: slot.appointmentType,
       })),
     };
 

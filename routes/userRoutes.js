@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
 const appointmentController = require("../controllers/appointmentController");
+const clinicController = require("../controllers/clinicController");
 
 //User flow apis
 router.post("/user/signup", userController.signUpUser);
@@ -22,7 +23,7 @@ router.get("/user/all/:userId",appointmentController.getAllAppointmentsForUser)
 //Admin flow apis
 router.get("/admin/getAllUsers",userController.getAllUsers);
 
-
+router.post("/user/clinicrating",clinicController.addClinicRating)
 
 
 module.exports = router;

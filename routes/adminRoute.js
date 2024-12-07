@@ -5,6 +5,11 @@ const adminController = require("../controllers/adminController");
 const appointmentController=require("../controllers/appointmentController")
 const { bookAppointment } = require("../controllers/appointmentController");
 
+
+
+router.post("/admin/signup",adminController.adminSignup)
+router.post("/admin/login",adminController.adminLogin)
+
 router.get("/admin/getAllUsers",userController.getAllUsers);
 router.post ("/user/appointment",appointmentController.bookAppointment)
 module.exports = router;

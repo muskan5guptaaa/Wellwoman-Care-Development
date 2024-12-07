@@ -75,7 +75,7 @@ const giveRating = async (req, res) => {
     const ratings = await Rating.find({
   doctorId: doctorId,
       })
-        .populate("userDocId", "name email") // Optionally populate user details
+        .populate("userDocId", "name email") 
         .exec();
   
       return res.status(200).json({

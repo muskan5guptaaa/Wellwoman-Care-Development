@@ -4,24 +4,23 @@ const RatingSchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Doctor",
-    required: true,
   },
   userDocId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+  },
+  clinicId:{
+     type:mongoose.Schema.Types.ObjectId,
+     ref:"Clinic"
   },
   customerName: {
     type: String,
-    required: true,
   },
   customerProfiles: {
     type: String,
-    required: true,
   },
   feedback: {
     type: String,
-    required: true,
   },
   images: [String],
   rating: {

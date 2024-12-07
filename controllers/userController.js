@@ -58,7 +58,7 @@ const signUpUser = async (req, res) => {
       const { email, password, name} = validateReqBody;
   
       // Check if the email and phone already exists
-      let existingUser = await User.findOne({ email: email, phone: phone });
+      let existingUser = await User.findOne({ email: email });
       if (existingUser) {
         return res.status(400).json({
           success: false,
@@ -71,7 +71,6 @@ const signUpUser = async (req, res) => {
       const newUser = await User.create({
         name,
         email,
-        phone,
         password: hashedPassword,
         username: email.split("@")[0],        
       });
@@ -107,7 +106,6 @@ const signUpUser = async (req, res) => {
                 message: 'Invalid email or password'
             });
         }
-
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {

@@ -3,6 +3,7 @@ const Clinic=require("../models/clinicModel")
 const Doctor=require("../models/doctorsModel")
 const Rating = require("../models/ratingModel");
 const {nearbyClinicsSV} = require('../schemaValidator/clinicValidator');
+const User = require("../models/userModel");
 
 
 // Create a hospital/clinic
@@ -88,7 +89,6 @@ const getClinicById = async (req, res) => {
         message: "Latitude and longitude are required.",
       });
     }
-
     // Find clinics near the given coordinates
     const nearbyClinics = await Clinic.find({
       location: {
@@ -115,12 +115,88 @@ const getClinicById = async (req, res) => {
     });
   }
 };
+const addClinicRating = async (req, res) => {
+  try {
+    const { clinicId, rating, comment } = req.body;
+
+    // Validate input
+    if (!clinicId || !rating) {
+      return res.status(400).json({
+        success: false,
+        message: "Clinic ID and rating are required.",
+      });
+    }
+
+    // Fetch the clinic
+    const clinic = await Clinic.findById(clinicId);
+    if (!clinic) {
+      return res.status(404).json({
+        success: false,
+        message: "Clinic not found.",
+      });
+    }
+
+    // Create a new rating
+    const newRating = await Rating.create({
+      clinicId: clinic._id, // Safely accessing _id
+      userId: req.user ? req.user._id : null, // Ensure req.user is available
+      rating,
+      comment,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Rating added successfully.",
+      data: newRating,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+    });
+  }
+};
+
+
+const getClinicRatings = async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+
+    // Validate the clinic exists
+    const clinicExists = await Clinic.findById(clinicId);
+    if (!clinicExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Clinic not found.",
+      });
+    }
+
+    // Fetch ratings for the clinic
+    const ratings = await Rating.find({ clinicId })
+      .populate("userId", "name email") // Populate user details
+      .sort({ createdAt: -1 }); // Sort by latest first
+
+    return res.status(200).json({
+      success: true,
+      message: "Ratings retrieved successfully.",
+      data: ratings,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+    });
+  }
+};
 
 
       module.exports = {
-       createClinic,
+    createClinic,
     getNearbyClinics,
-    getClinicById
-    
+    getClinicById,   
+    addClinicRating ,
+    getClinicRatings
    };
   
