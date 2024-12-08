@@ -51,8 +51,6 @@ await newClinic.save();
      });
   }
 };
-
-
 const getClinicById = async (req, res) => {
     try {
       const Clinic = await Clinic.findById(req.params.id);
@@ -126,7 +124,6 @@ const addClinicRating = async (req, res) => {
         message: "Clinic ID and rating are required.",
       });
     }
-
     // Fetch the clinic
     const clinic = await Clinic.findById(clinicId);
     if (!clinic) {
@@ -135,11 +132,10 @@ const addClinicRating = async (req, res) => {
         message: "Clinic not found.",
       });
     }
-
     // Create a new rating
     const newRating = await Rating.create({
-      clinicId: clinic._id, // Safely accessing _id
-      userId: req.user ? req.user._id : null, // Ensure req.user is available
+      clinicId: clinic._id, 
+      userId: req.user ? req.user._id : null, 
       rating,
       comment,
     });
@@ -158,7 +154,6 @@ const addClinicRating = async (req, res) => {
   }
 };
 
-
 const getClinicRatings = async (req, res) => {
   try {
     const { clinicId } = req.params;
@@ -174,8 +169,8 @@ const getClinicRatings = async (req, res) => {
 
     // Fetch ratings for the clinic
     const ratings = await Rating.find({ clinicId })
-      .populate("userId", "name email") // Populate user details
-      .sort({ createdAt: -1 }); // Sort by latest first
+      .populate("userId", "name email") 
+      .sort({ createdAt: -1 }); 
 
     return res.status(200).json({
       success: true,

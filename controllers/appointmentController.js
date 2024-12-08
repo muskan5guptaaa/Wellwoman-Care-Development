@@ -26,8 +26,6 @@ const Doctor=require("../models/doctorsModel");
           status: isBooked ? "Booked" : "Available",
         };
       });
-
-
       res.status(200).json({ schedule });
     } catch (error) {
       console.error("Error fetching doctor schedule:", error);
@@ -86,9 +84,8 @@ const Doctor=require("../models/doctorsModel");
   
       if (appointmentType === "online") {
         // Generate or fetch a Zoom/Google Meet link
-        meetingLink = `https://zoom.us/j/${Math.floor(Math.random() * 100000000)}`; // Example Zoom link
+        meetingLink = `https://zoom.us/j/${Math.floor(Math.random() * 100000000)}`; // Example
       } else if (appointmentType === "offline") {
-        // Return doctor's address
         doctorAddress = doctor.address;
       }
   
@@ -104,9 +101,7 @@ const Doctor=require("../models/doctorsModel");
       });
   
       await newAppointment.save();
-  
-      // Respond with appointment details and additional information
-      res.status(201).json({
+        res.status(201).json({
         success: true,
         message: "Appointment booked successfully.",
         appointment: newAppointment,
