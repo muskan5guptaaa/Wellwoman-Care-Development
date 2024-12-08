@@ -626,7 +626,7 @@ const getTopRatedDoctors = async (req, res) => {
 
 const getDoctorDetails = async (req, res) => {
   try {
-    const { doctorId } = req.query; // Get doctor ID from the route parameter
+    const { doctorId } = req.query; 
 
     const doctor = await Doctor.findById(doctorId).select(
       "name specialization availability"
