@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const adminSchema = new mongoose.Schema({
+  adminDocId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+  },
   name: {
     type: String,
   },

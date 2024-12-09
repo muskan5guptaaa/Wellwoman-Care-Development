@@ -99,8 +99,7 @@ const Doctor=require("../models/doctorsModel");
         meetingLink,
         problemDescription
       });
-  
-      await newAppointment.save();
+       await newAppointment.save();
         res.status(201).json({
         success: true,
         message: "Appointment booked successfully.",

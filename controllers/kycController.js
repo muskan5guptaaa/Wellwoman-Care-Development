@@ -125,7 +125,6 @@ const getDoctorKycStatus=async(req,res)=>{
       success:true,
       status:{
         kycStatus:Kyc?Kyc.isKycVerified?"Completed":"Pending":"Not Found",
-
       }
     });
   }catch(err){

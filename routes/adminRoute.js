@@ -9,7 +9,8 @@ const { bookAppointment } = require("../controllers/appointmentController");
 
 router.post("/admin/signup",adminController.adminSignup)
 router.post("/admin/login",adminController.adminLogin)
-
+router.post("/admin/addProduct",adminController.addMedicalProduct)
+router.get("/admin/allProduct",adminController.getAllProducts)
 router.get("/admin/getAllUsers",userController.getAllUsers);
 router.post ("/user/appointment",appointmentController.bookAppointment)
 module.exports = router;

@@ -75,6 +75,134 @@ const getClinicById = async (req, res) => {
     }
   };
 
+  const deleteClinic = async (req, res) => {
+    const { id } = req.params;
+    try {
+      const clinic = await Clinic.findByIdAndDelete(id);
+      if (!clinic) {
+        return res.status(404).json({ success: false, message: "Clinic not found." });
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Clinic deleted successfully.",
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error.",
+      });
+    }
+  };
+  const getAllClinics = async (req, res) => {
+    try {
+      const {
+        name,
+        city,
+        doctorName,
+        startDate,
+        endDate,
+        page = 1,
+        limit = 10,
+        sortBy = "name",
+        sortOrder = 1,
+      } = req.query;
+  
+      const filter = {};
+
+
+      // Apply filters
+      if (name) {
+        filter.name = { $regex: name, $options: "i" }; // Case-insensitive search
+      }
+      if (city) {
+        filter.city = { $regex: city, $options: "i" };
+      }
+      if (startDate && endDate) {
+        filter.createdAt = {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate),
+        };
+      }
+  
+      // Lookup for doctor name if provided
+      if (doctorName) {
+        const doctors = await Doctor.find(
+          { name: { $regex: name, $options: "i" } },
+          "_id"
+        );
+        const doctorIds = doctors.map((doc) => doc._id);
+        filter.doctorId = { $in: doctorIds};
+      }
+  
+      // Aggregate query for clinics
+      const clinics = await Clinic.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $lookup: {
+            from: "doctors",
+            localField: "doctorId",
+            foreignField: "_id",
+            as: "doctor",
+          },
+        },
+        {
+          $unwind: {
+            path: "$doctor",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            city: 1,
+            state: 1,
+            country: 1,
+            address: 1,
+            pincode: 1,
+            createdAt: 1,
+            doctorName: "$doctor.name",
+            specialization: "$doctor.specialization",
+          },
+        },
+        {
+          $sort: { [sortBy]: parseInt(sortOrder) },
+        },
+        {
+          $facet: {
+            data: [{ $skip: (page - 1) * limit }, { $limit: parseInt(limit) }],
+            totalCount: [{ $count: "total" }],
+          },
+        },
+      ]);
+  
+      const result = clinics[0] || {};
+      const totalItems =
+        result.totalCount.length > 0 ? result.totalCount[0].total : 0;
+      const totalPages = totalItems > 0 ? Math.ceil(totalItems / limit) : 1;
+  
+      // Send response
+      return res.status(200).json({
+        success: true,
+        data: result.data,
+        page: parseInt(page),
+        pages: totalPages,
+        pageSize: parseInt(limit),
+        total: totalItems,
+      });
+    } catch (error) {
+      console.error("Error in fetching all clinics", error);
+      return res.status(500).json({
+        success: false,
+        message: error?.message || "Internal Server Error",
+      });
+    }
+  };
+  
+
 
   const getNearbyClinics = async (req, res) => {
   try {
@@ -187,11 +315,13 @@ const getClinicRatings = async (req, res) => {
 };
 
 
-      module.exports = {
+    module.exports = {
     createClinic,
     getNearbyClinics,
     getClinicById,   
     addClinicRating ,
-    getClinicRatings
+    getClinicRatings,
+    getAllClinics,
+    deleteClinic
    };
   
