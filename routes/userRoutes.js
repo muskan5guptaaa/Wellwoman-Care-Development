@@ -3,11 +3,13 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const appointmentController = require("../controllers/appointmentController");
 const clinicController = require("../controllers/clinicController");
+const { isUserAuth } = require("../middleware/authmiddleware");
+
 
 //User flow apis
 router.post("/user/signup", userController.signUpUser);
 router.post("/user/login",userController.loginUser);
-router.post("/user/changePassword",userController.changePassword);
+router.post("/user/changePassword",isUserAuth,userController.changePassword);
 router.put("/user/editProfile",userController.editProfile);
 router.post("/user/forgetPassword",userController.forgetPassword);
 router.post("/user/logout",userController.logout);
