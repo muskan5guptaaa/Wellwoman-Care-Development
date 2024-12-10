@@ -195,6 +195,35 @@ const deleteMedicalProduct = async (req, res) => {
   }
 };
 
+const getProductDetails = async (req, res) => {
+  const { productId } = req.params; // Product ID from the URL parameter
+
+  try {
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product details retrieved successfully",
+      data: product,
+    });
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching product details",
+      error: error.message,
+    });
+  }
+};
+
+
 const getAllProducts = async (req, res) => {
   const { search } = req.query; // Get search query from request URL (query parameter)
 
@@ -247,5 +276,6 @@ module.exports={
   addMedicalProduct,
   updateMedicalProduct,
   deleteMedicalProduct,
-  getAllProducts
+  getAllProducts,
+  getProductDetails
 }

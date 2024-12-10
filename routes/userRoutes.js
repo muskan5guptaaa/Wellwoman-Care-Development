@@ -21,7 +21,9 @@ router.post("/user/:doctorId/new", appointmentController.bookAppointment);
 router.get("/user/schedule",appointmentController.getDoctorSchedule)
 router.get("/user/all/:userId",appointmentController.getAllAppointmentsForUser)
 
-
+//Products apis
+router.post("/user/add",userController.addToCart)
+router.get("/user/cart/:userId",userController.getUserCart)
 //Admin flow apis
 router.get("/admin/getAllUsers",userController.getAllUsers);
 

@@ -6,11 +6,13 @@ const crypto = require('crypto');
 const axios = require('axios');
 const OTP=require("../models/otpModel")
 const Token = require("../models/tokenmodel"); 
+const Cart =require("../models/cartModel")
 const mongoose = require("mongoose");
 
 
 //OTP send using phone or email
 const { generateOtp, sendOtp } = require('../utils/sendOtp');
+const Product = require('../models/productModel');
 const sendOtpUser = async (req, res) => {
     try {
         const { otpType, phone, email } = req.body;
@@ -114,25 +116,23 @@ const signUpUser = async (req, res) => {
                 message: 'Invalid email or password'
             });
         }
-
-        // Generate a token
-        const token = jwt.sign(
-            { 
-              userId: user._id, 
-              email: user.email
-           },
-            process.env.ACCESS_TOKEN_SECRET,                 
-            { 
-              expiresIn: '1h'
-           }                      
-        );
-    // Store token in the database
-    await Token.create({
-      token: token,
-      objectDocId: user._id,
-      userType: "User",
-      expired_at: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
+        
+    // Generate a token for the user
+    const token = user.generateToken();
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: true,
     });
+
+    const expired_at = new Date();
+    expired_at.setDate(expired_at.getDate() + 30);
+    await Token.create({
+      objectDocId: user._id,
+      token: token,
+      expired_at,
+    });
+
 
      // Use aggregation to find the user and provide default values
      const userDetails = await User.aggregate([
@@ -153,14 +153,6 @@ const signUpUser = async (req, res) => {
         },
       },
     ]);
-    // Check if the token was saved
-    const savedToken = await Token.findOne({ token: token });
-    if (!savedToken) {
-      return res.status(500).json({
-        success: false,
-        message: "Token not saved in database",
-      });
-    }
       
     res.status(200).json({
       success: true,
@@ -515,6 +507,86 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const addToCart = async (req, res) => {
+  const { userId, productId, quantity } = req.body; // Get userId, productId, and quantity from the request body
+
+  if (!userId || !productId || !quantity) {
+    return res.status(400).json({
+      success: false,
+      message: 'userId, productId, and quantity are required',
+    });
+  }
+
+  try {
+    // Check if the product already exists in the cart for this user
+    let cartItem = await Cart.findOne({ userId, productId });
+
+    if (cartItem) {
+      // If the product is already in the cart, update the quantity
+      cartItem.quantity += quantity;
+      await cartItem.save();
+    } else {
+      // If not in the cart, create a new cart item
+      const newCartItem = new Cart({
+        userId,
+        productId,
+        quantity,
+      });
+      await newCartItem.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Product added to cart successfully',
+    });
+  } catch (error) {
+    console.error('Error adding product to cart:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding product to cart',
+      error: error.message,
+    });
+  }
+};
+
+
+const getUserCart = async (req, res) => {
+  try {
+    const { userId } = req.params; // Get userId from the route parameter
+
+    // Find the cart for the specific user
+    const cart = await Cart.findOne({ userId }).populate('products.productId'); // Populate product details
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: 'No cart found for this user',
+      });
+    }
+
+    // Calculate total number of products
+    const totalProducts = cart.products.reduce((total, item) => total + item.quantity, 0);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Cart fetched successfully',
+      userId: cart.userId,
+      totalProducts,
+      products: cart.products.map((item) => ({
+        productId: item.productId._id,
+        productName: item.productId.name,
+        quantity: item.quantity,
+        price: item.productId.price,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+
  module.exports={
     signUpUser,
     loginUser,
@@ -525,5 +597,7 @@ const getUserProfile = async (req, res) => {
     logout,
     getAllUsers,
     sendOtpUser,
-    getUserProfile
+    getUserProfile,
+    addToCart,
+    getUserCart
   }

@@ -11,9 +11,8 @@ exports.isUserAuth = async (req, res, next) => {
     }
 
     // Verify the token
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Use the JWT_SECRET for Patient tokens
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); 
 
-    // Find the patient based on the decoded token
     const user = await User.findById(decoded._id);
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found" });
@@ -21,7 +20,6 @@ exports.isUserAuth = async (req, res, next) => {
 
     // Find the token in the database
     const tokenDoc = await Token.findOne({
-      token: token,
       userDocId: decoded._id,
       userType: "User",
     });
@@ -36,7 +34,6 @@ exports.isUserAuth = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Token has expired" });
     }
 
-    // Attach patient to the request object
     req.userId = user._id;
     next();
   } catch (err) {
