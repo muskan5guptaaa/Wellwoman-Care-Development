@@ -825,7 +825,6 @@ const getSavedProducts = async (req, res) => {
         message: "userId is required",
       });
     }
-
     // Perform aggregation to fetch saved products
     const user = await User.aggregate([
       {
@@ -845,7 +844,6 @@ const getSavedProducts = async (req, res) => {
           preserveNullAndEmptyArrays: true, // Retain user document even if no saved products
         },
       },
-
       {
         $match: searchTerm
           ? {
