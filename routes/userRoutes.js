@@ -25,6 +25,8 @@ router.get("/user/all/:userId",appointmentController.getAllAppointmentsForUser)
 router.post("/user/add",userController.addToCart)
 router.get("/user/cart/:userId",userController.getUserCart)
 router.get("/user/searchProducts",userController.searchProducts)
+router.post("/user/save",userController.saveProduct)
+router.get("/user/getSaveProduct",userController.getSavedProducts)
 //Admin flow apis
 router.get("/admin/getAllUsers",userController.getAllUsers);
 

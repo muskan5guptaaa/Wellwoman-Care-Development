@@ -452,61 +452,56 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-
 const getUserProfile = async (req, res) => {
   try {
-      const userId = req.user._id;
+    const userId = req.query.userId || req.body.userId;
 
-      // Aggregation pipeline to fetch user profile
-      const userProfile = await User.aggregate([
-          { $match: { _id: userId } }, 
-          {
-              $project: {
-                  name: 1,
-                  email: 1,
-                  phone: 1,
-                  gender: 1,
-                  dateOfBirth: 1,
-                  address: 1,
-                  Diseases:1,
-                  height:1,
-                  weight:1,
-                  medicalHistory: 1,
-                  healthMetrics: 1, 
-              }
-          }
-      ]);
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid or missing User ID" });
+    }
 
-      if (!userProfile || userProfile.length === 0) {
-          return res.status(404).json({ message: "User profile not found" });
-      }
+    const userProfile = await User.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          phone: 1,
+          gender: 1,
+          dateOfBirth: 1,
+          address: 1,
+          Diseases: 1,
+          height: 1,
+          weight: 1,
+          medicalHistory: 1,
+          healthMetrics: 1,
+        },
+      },
+    ]);
 
-      const profile = userProfile[0];
-      if (profile.healthMetrics) {
-          const { bloodPressure, heartRate, bodyTemperature, bloodGlucose } = profile.healthMetrics;
+    if (!userProfile || userProfile.length === 0) {
+      return res.status(404).json({ message: "User profile not found" });
+    }
 
-          // Check if these health metrics are available and return them
-          return res.status(200).json({
-              profile: {
-                  ...profile,
-                  healthMetrics: {
-                      bloodPressure: bloodPressure || 'Data not available',
-                      heartRate: heartRate || 'Data not available',
-                      bodyTemperature: bodyTemperature || 'Data not available',
-                      bloodGlucose: bloodGlucose || 'Data not available',
-                  }
-              }
-          });
-      }
+    const profile = userProfile[0];
+    const healthMetrics = profile.healthMetrics || {};
 
-      res.status(200).json({ profile: userProfile[0] });
-
+    res.status(200).json({
+      profile: {
+        ...profile,
+        healthMetrics: {
+          bloodPressure: healthMetrics.bloodPressure || "Data not available",
+          heartRate: healthMetrics.heartRate || "Data not available",
+          bodyTemperature: healthMetrics.bodyTemperature || "Data not available",
+          bloodGlucose: healthMetrics.bloodGlucose || "Data not available",
+        },
+      },
+    });
   } catch (error) {
-      console.error("Error fetching user profile:", error);
-      res.status(500).json({ message: "Server error" });
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
-
 
 
 const addToCart = async (req, res) => {
@@ -740,6 +735,157 @@ const getUserCart = async (req, res) => {
 };
 
 
+const saveProduct = async (req, res) => {
+  try {
+    const { userId, productId, action } = req.body; // Extract userId, productDocId, and action from the request body
+
+    // Validate the inputs
+    if (!userId || !productId || !action) {
+      return res.status(400).json({
+        success: false,
+        message: "userId, productDocId, and action are required",
+      });
+    }
+
+    // Check if the product exists
+    const product = await Product.findById(productId); // Replace "Product" with your product model name
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (action === "add") {
+      // Check if the product is already saved
+      if (user.savedProducts.includes(productId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Product already saved" });
+      }
+
+      // Add the product to the saved list
+      user.savedProducts.push(productId);
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Product added to saved list",
+        savedProducts: user.savedProducts,
+      });
+    } else if (action === "remove") {
+      // Check if the product is in the saved list
+      const index = user.savedProducts.indexOf(productId);
+      if (index === -1) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Product not in saved list" });
+      }
+
+      // Remove the product from the saved list
+      user.savedProducts.splice(index, 1);
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Product removed from saved list",
+        savedProducts: user.savedProducts,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid action. Use 'add' or 'remove'.",
+      });
+    }
+  } catch (error) {
+    console.error("Error saving product:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+const getSavedProducts = async (req, res) => {
+  try {
+    const { userId } = req.query; // Extract userId from query params
+    const searchTerm = req.query.name; // Extract search term (if any) from query params
+
+    // Validate the inputs
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required",
+      });
+    }
+
+    // Perform aggregation to fetch saved products
+    const user = await User.aggregate([
+      {
+        $match: { _id: userId }, 
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "savedProducts", 
+          foreignField: "_id", 
+          as: "savedProducts", 
+        },
+      },
+      {
+        $unwind: {
+          path: "$savedProducts",
+          preserveNullAndEmptyArrays: true, // Retain user document even if no saved products
+        },
+      },
+
+      {
+        $match: searchTerm
+          ? {
+              "savedProducts.name": { $regex: searchTerm, $options: "i" }, 
+            }
+          : {}, 
+      },
+      {
+        $project: {
+          _id: 1,
+          savedWarehouse: 1, 
+          savedProducts: {
+            _id: "$savedProducts._id",
+            name: "$savedProducts.name",
+            category: "$savedProducts.category",
+            price: "$savedProducts.price", 
+          },
+        },
+      },
+    ]);
+
+    if (!user || user.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found or no saved products",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      savedProducts: user.map((u) => u.savedProducts),
+    });
+  } catch (error) {
+    console.error("Error fetching saved products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
 
 
 
@@ -756,5 +902,9 @@ const getUserCart = async (req, res) => {
     getUserProfile,
     addToCart,
     getUserCart,
-    searchProducts
+    searchProducts,
+    updateCart,
+    removeFromCart,
+    saveProduct,
+    getSavedProducts
   }
