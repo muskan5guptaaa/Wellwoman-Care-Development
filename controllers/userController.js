@@ -603,23 +603,20 @@ const searchProducts = async (req, res) => {
         message: "Search keyword is required",
       });
     }
-
     // Search for products that match the keyword in `name`, `description`, or `category`
     const products = await Product.find({
       $or: [
-        { name: { $regex: keyword, $options: "i" } }, // Case-insensitive search in name
-        { description: { $regex: keyword, $options: "i" } }, // Case-insensitive search in description
-        { category: { $regex: keyword, $options: "i" } }, // Case-insensitive search in category
+        { name: { $regex: keyword, $options: "i" } }, 
+        { description: { $regex: keyword, $options: "i" } }, 
+        { category: { $regex: keyword, $options: "i" } },
       ],
     });
-
     if (!products.length) {
       return res.status(404).json({
         success: false,
         message: "No products found matching your search criteria",
       });
     }
-
     res.status(200).json({
       success: true,
       message: "Products fetched successfully",
@@ -737,155 +734,96 @@ const getUserCart = async (req, res) => {
 
 const saveProduct = async (req, res) => {
   try {
-    const { userId, productId, action } = req.body; // Extract userId, productDocId, and action from the request body
+    const { userId, productId, action } = req.body;
 
-    // Validate the inputs
     if (!userId || !productId || !action) {
       return res.status(400).json({
         success: false,
-        message: "userId, productDocId, and action are required",
+        message: "userId, productId, and action are required",
       });
     }
 
-    // Check if the product exists
-    const product = await Product.findById(productId); // Replace "Product" with your product model name
+    const product = await Product.findById(productId);
     if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     if (action === "add") {
-      // Check if the product is already saved
       if (user.savedProducts.includes(productId)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Product already saved" });
+        return res.status(400).json({ success: false, message: "Product already saved" });
       }
-
-      // Add the product to the saved list
       user.savedProducts.push(productId);
       await user.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Product added to saved list",
-        savedProducts: user.savedProducts,
-      });
+      return res.status(200).json({ success: true, message: "Product added to saved list", savedProducts: user.savedProducts });
     } else if (action === "remove") {
-      // Check if the product is in the saved list
       const index = user.savedProducts.indexOf(productId);
       if (index === -1) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Product not in saved list" });
+        return res.status(400).json({ success: false, message: "Product not in saved list" });
       }
-
-      // Remove the product from the saved list
       user.savedProducts.splice(index, 1);
       await user.save();
-
-      return res.status(200).json({
-        success: true,
-        message: "Product removed from saved list",
-        savedProducts: user.savedProducts,
-      });
+      return res.status(200).json({ success: true, message: "Product removed from saved list", savedProducts: user.savedProducts });
     } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid action. Use 'add' or 'remove'.",
-      });
+      return res.status(400).json({ success: false, message: "Invalid action. Use 'add' or 'remove'." });
     }
   } catch (error) {
     console.error("Error saving product:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 const getSavedProducts = async (req, res) => {
   try {
-    const { userId } = req.query; // Extract userId from query params
-    const searchTerm = req.query.name; // Extract search term (if any) from query params
+    const { userId } = req.query;
+    const searchTerm = req.query.name;
 
-    // Validate the inputs
     if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "userId is required",
-      });
+      return res.status(400).json({ success: false, message: "userId is required" });
     }
-    // Perform aggregation to fetch saved products
+
     const user = await User.aggregate([
       {
-        $match: { _id: userId }, 
+        $match: { _id: new mongoose.Types.ObjectId(userId) }, // Convert userId to ObjectId
       },
       {
         $lookup: {
-          from: "products",
-          localField: "savedProducts", 
-          foreignField: "_id", 
-          as: "savedProducts", 
+          from: "products", // Ensure this matches the actual collection name
+          localField: "savedProducts",
+          foreignField: "_id",
+          as: "savedProducts",
         },
       },
       {
-        $unwind: {
-          path: "$savedProducts",
-          preserveNullAndEmptyArrays: true, // Retain user document even if no saved products
-        },
+        $unwind: { path: "$savedProducts", preserveNullAndEmptyArrays: true },
       },
       {
-        $match: searchTerm
-          ? {
-              "savedProducts.name": { $regex: searchTerm, $options: "i" }, 
-            }
-          : {}, 
+        $match: searchTerm ? { "savedProducts.name": { $regex: searchTerm, $options: "i" } } : {},
       },
       {
         $project: {
           _id: 1,
-          savedWarehouse: 1, 
-          savedProducts: {
-            _id: "$savedProducts._id",
-            name: "$savedProducts.name",
-            category: "$savedProducts.category",
-            price: "$savedProducts.price", 
-          },
+          "savedProducts._id": 1,
+          "savedProducts.name": 1,
+          "savedProducts.category": 1,
+          "savedProducts.price": 1,
         },
       },
     ]);
 
     if (!user || user.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found or no saved products",
-      });
+      return res.status(404).json({ success: false, message: "User not found or no saved products" });
     }
 
-    return res.status(200).json({
-      success: true,
-      savedProducts: user.map((u) => u.savedProducts),
-    });
+    return res.status(200).json({ success: true, savedProducts: user.map((u) => u.savedProducts) });
   } catch (error) {
     console.error("Error fetching saved products:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
-
 
  module.exports={
     signUpUser,

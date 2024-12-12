@@ -376,6 +376,79 @@ const forgetPasswordDoctor = async (req, res) => {
       });
     }
   };
+  const saveDoctorPersonalInfo = async (req, res) => {
+    try {
+      const { firstName, lastName, phone, dob, gender } = req.body;
+  
+      // Validate the inputs
+      if (!firstName || !lastName || !phone || !dob || !gender) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields are required (First name, Last name, Phone, DOB, Gender)",
+        });
+      }
+  
+      // Assuming the doctor ID is available in the request (from authentication middleware)
+      const { doctorId } = req.params;
+  
+      // Use aggregation to fetch the doctor's existing data (just for demonstration)
+      const doctor = await Doctor.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(doctorId) } },  // Match the doctor by ID
+        { 
+          $project: {  // Return the existing doctor information
+            firstName: 1,
+            lastName: 1,
+            phone: 1,
+            dob: 1,
+            gender: 1
+          }
+        }
+      ]);
+  
+      if (!doctor || doctor.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Doctor not found",
+        });
+      }
+  
+      // Now update the doctor's information
+      const updatedDoctor = await Doctor.findOneAndUpdate(
+        { _id: new mongoose.Types.ObjectId(doctorId) }, 
+        { 
+          $set: {
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            dob: new Date(dob), // Convert the DOB to Date format
+            gender: gender
+          }
+        },
+        { new: true } // Return the updated doctor document
+      );
+  
+      return res.status(200).json({
+        success: true,
+        message: "Doctor's personal information updated successfully",
+        doctor: {
+          firstName: updatedDoctor.firstName,
+          lastName: updatedDoctor.lastName,
+          phone: updatedDoctor.phone,
+          dob: updatedDoctor.dob,
+          gender: updatedDoctor.gender,
+        },
+      });
+  
+    } catch (error) {
+      console.error("Error saving doctor's personal information:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+      });
+    }
+  };
+  
+  
   
   const getAllDoctors = async (req, res) => {
     const filter = {};
@@ -677,5 +750,6 @@ module.exports = {
     logoutDoctor,
     updateAvailabilityDoctor,
     getTopRatedDoctors,
-    getDoctorDetails
+    getDoctorDetails,
+    saveDoctorPersonalInfo
 };

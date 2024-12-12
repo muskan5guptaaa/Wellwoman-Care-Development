@@ -45,11 +45,7 @@ const createOrUpdateKyc = async (req, res) => {
            fullName,
            frontImage, 
            backImage, 
-           licenseNumber,
-           licenseExpiryDate, 
            documentType,
-           documentNumber,
-          documentFileUrl ,
           kycStatus: "Completed"
          },
         {
@@ -70,11 +66,7 @@ const createOrUpdateKyc = async (req, res) => {
       fullName,
       frontImage,
       backImage,
-      licenseNumber,
-      licenseExpiryDate,
       documentType,
-      documentNumber,
-      documentFileUrl,
       kycStatus
     });
 

@@ -29,7 +29,7 @@ const doctorKycSchema = new mongoose.Schema({
   },
  documentType: {
         type: String,
-        enum: ["Passport", "Driver's License", "National ID", "Medical License"],
+        enum: ["Passport", "Driver's License", "Aadhar card","Pan Card", "Medical License"],
         required: true,
       },
  documentNumber: {
@@ -46,7 +46,6 @@ const doctorKycSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["Pending", "Completed"],
-    default: "Pending",
   },
   kycSubmissionDate: {
     type: Date,

@@ -16,6 +16,7 @@ router.post('/doctor/logout',  doctorController.logoutDoctor);
 router.get("/doctor/nearby",clinicController.getNearbyClinics);
 router.get("/user/toprating",doctorController.getTopRatedDoctors)
 router.get("/user/detail",doctorController.getDoctorDetails)
+router.post("/doctor/personalInfo/:doctorId",doctorController.saveDoctorPersonalInfo)
 
 // Doctor availability and appointments
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
