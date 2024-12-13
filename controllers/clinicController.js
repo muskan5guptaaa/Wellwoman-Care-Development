@@ -5,19 +5,44 @@ const Rating = require("../models/ratingModel");
 const {nearbyClinicsSV} = require('../schemaValidator/clinicValidator');
 const User = require("../models/userModel");
 
+const saveDoctorCredentials = async (req, res) => {
+  try {
+    const { doctorId, licenseNumber, expiryDate, issuingAuthority } = req.body;
 
-// Create a hospital/clinic
+    // Validate required fields
+    if (!doctorId || !licenseNumber || !expiryDate || !issuingAuthority) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    // Save credentials in the database
+    const credentials = new Clinic({
+      doctorId,
+      licenseNumber,
+      expiryDate,
+      issuingAuthority,
+    });
+
+    await credentials.save();
+    res.status(201).json({ message: 'Credentials saved successfully.', credentials });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'An error occurred while saving credentials.' });
+  }
+};
+
 const createClinic = async (req, res) => {
   try {
     // Validate the request body using Joi schema
     const validatedData = await nearbyClinicsSV.validateAsync(req.body);
 
     const { name, location, address, city, pincode, state, country, images, doctorId } = validatedData;
+    
     // Check if the doctor exists
     const doctorExists = await Doctor.findById(doctorId);
     if (!doctorExists) {
       return res.status(404).json({ success: false, message: "Doctor not found." });
     }
+    
     // Create the clinic in the database
     const newClinic = await Clinic.create({
       name,
@@ -30,19 +55,32 @@ const createClinic = async (req, res) => {
       images: images || [],
       doctorId, 
     });
-await newClinic.save();
-    // Return success response
+
+    await newClinic.save();
+
+    // Return success response with clinicId
     return res.status(201).json({
       success: true,
       message: "Clinic created successfully.",
-      data: newClinic,
+      data: {
+        clinicId: newClinic._id, // Include clinicId here
+        name: newClinic.name,
+        location: newClinic.location,
+        address: newClinic.address,
+        city: newClinic.city,
+        pincode: newClinic.pincode,
+        state: newClinic.state,
+        country: newClinic.country,
+        images: newClinic.images,
+        doctorId: newClinic.doctorId,
+      },
     });
   } catch (err) {
     console.error(err);
     if (err.isJoi) {
       return res.status(400).json({
          success: false,
-          message: err.details[0].message 
+         message: err.details[0].message 
       });
     }
     return res.status(500).json({
@@ -51,6 +89,8 @@ await newClinic.save();
      });
   }
 };
+
+
 const getClinicById = async (req, res) => {
     try {
       const Clinic = await Clinic.findById(req.params.id);
@@ -241,6 +281,8 @@ const getClinicById = async (req, res) => {
     });
   }
 };
+
+
 const addClinicRating = async (req, res) => {
   try {
     const { clinicId, rating, comment } = req.body;
@@ -282,6 +324,9 @@ const addClinicRating = async (req, res) => {
   }
 };
 
+
+
+
 const getClinicRatings = async (req, res) => {
   try {
     const { clinicId } = req.params;
@@ -322,6 +367,8 @@ const getClinicRatings = async (req, res) => {
     addClinicRating ,
     getClinicRatings,
     getAllClinics,
-    deleteClinic
+    deleteClinic,
+    saveDoctorCredentials,
+    
    };
   

@@ -72,6 +72,8 @@ const doctorSchema = new mongoose.Schema({
   longitude: {
     type: String,
   },
+  clinicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Clinic' },
+
   experience: { 
     type: Number,
      default: 0

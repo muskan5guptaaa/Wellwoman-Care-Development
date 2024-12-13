@@ -567,23 +567,25 @@ const forgetPasswordDoctor = async (req, res) => {
     }
   };
 
-  
-// Update Doctor's Availability
+// Update Doctor's Availability and Specialization
 const updateAvailabilityDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-    const { days, startTime, endTime, appointmentType } = req.body;
+    const { days, startTime, endTime, appointmentType, specialization } = req.body;
 
+    // Check if start time, end time, and appointment type are provided
     if (!startTime || !endTime || !appointmentType) {
       return res.status(400).json({ message: "Start time, end time, and appointment type are required." });
     }
 
+    // Validate the provided days
     const validDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     const isValidDays = days.every((day) => validDays.includes(day));
     if (!isValidDays) {
       return res.status(400).json({ message: "Invalid day(s) provided." });
     }
 
+    // Function to generate time slots based on the provided start and end times
     const generateTimeSlots = (startTime, endTime) => {
       const slots = [];
       const start = new Date(`1970-01-01T${startTime}:00`);
@@ -595,31 +597,43 @@ const updateAvailabilityDoctor = async (req, res) => {
 
       let current = start;
       while (current < end) {
-        const next = new Date(current.getTime() + 30 * 60000);
+        const next = new Date(current.getTime() + 30 * 60000); // 30-minute intervals
         slots.push(`${current.toTimeString().slice(0, 5)}-${next.toTimeString().slice(0, 5)}`);
         current = next;
       }
       return slots;
     };
 
+    // Create the availability object
     const availability = days.map((day) => ({
       day,
       timeSlots: generateTimeSlots(startTime, endTime),
       appointmentType,
     }));
 
+    // Find the doctor by ID
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found." });
     }
 
+    // Update the doctor's specialization if provided
+    if (specialization) {
+      doctor.specialization = specialization; // Update specialization
+    }
+
+    // Update the availability
     doctor.availability = availability;
+    
+    // Save the updated doctor document
     await doctor.save();
 
+    // Return success response
     res.status(200).json({
       success: true,
-      message: "Doctor availability updated successfully.",
+      message: "Doctor availability and specialization updated successfully.",
       availability: doctor.availability,
+      specialization: doctor.specialization,  // Include updated specialization in response
     });
   } catch (error) {
     console.error("Error updating doctor availability:", error);
@@ -627,6 +641,7 @@ const updateAvailabilityDoctor = async (req, res) => {
   }
 };
 
+module.exports = { updateAvailabilityDoctor };
 
 
 
@@ -712,7 +727,6 @@ const getDoctorDetails = async (req, res) => {
       });
     }
     const doctorDetails = {
-      clinicId: newClinic._id, 
       name: doctor.name,
       specialization: doctor.specialization,
       availability: doctor.availability.map((slot) => ({

@@ -14,6 +14,7 @@ router.post('/doctor/changePassword', doctorController.changePasswordDoctor);
 router.post('/doctor/sendOtp', doctorController.sendOtpDoctor);
 router.post('/doctor/logout',  doctorController.logoutDoctor);
 router.get("/doctor/nearby",clinicController.getNearbyClinics);
+router.post("/doctor/clinicCredentials",clinicController.saveDoctorCredentials)
 router.get("/user/toprating",doctorController.getTopRatedDoctors)
 router.get("/user/detail",doctorController.getDoctorDetails)
 router.post("/doctor/personalInfo/:doctorId",doctorController.saveDoctorPersonalInfo)

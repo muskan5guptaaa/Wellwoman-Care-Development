@@ -76,7 +76,6 @@ const getDoctorSchedule = async (req, res) => {
           message: `Doctor does not support ${appointmentType} appointments on ${dayOfWeek}.`,
         });
       }
-  
       // Check if the time slot is already booked
       const existingAppointment = await Appointment.findOne({
         doctorId,
@@ -86,18 +85,6 @@ const getDoctorSchedule = async (req, res) => {
       if (existingAppointment) {
         return res.status(400).json({ message: "Time slot is already booked." });
       }
-  
-      // Process based on appointment type
-      let meetingLink = null;
-      let doctorAddress = null;
-  
-      if (appointmentType === "online") {
-        // Generate or fetch a Zoom/Google Meet link
-        meetingLink = `https://zoom.us/j/${Math.floor(Math.random() * 100000000)}`; // Example
-      } else if (appointmentType === "offline") {
-        doctorAddress = doctor.address;
-      }
-  
       // Book the appointment
       const newAppointment = new Appointment({
         doctorId,
@@ -105,7 +92,6 @@ const getDoctorSchedule = async (req, res) => {
         date,
         timeSlot,
         appointmentType,
-        meetingLink,
         problemDescription
       });
        await newAppointment.save();
@@ -113,10 +99,7 @@ const getDoctorSchedule = async (req, res) => {
         success: true,
         message: "Appointment booked successfully.",
         appointment: newAppointment,
-        additionalInfo: {
-          meetingLink: meetingLink || null,
-          doctorAddress: doctorAddress || null,
-        },
+       
       });
     } catch (error) {
       console.error("Error booking appointment:", error);

@@ -5,39 +5,50 @@ const { Schema } = mongoose;
 const clinicSchema = new Schema({
     name: {
        type: String,
-        required: true },
-    doctorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Doctor",
-        required:true,
-      },
+     },
+     doctors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' }],
+     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' }, // Reference to the doctor who created the clinic
+
+
+      licenseNumber: { 
+        type: String,
+         },
+  expiryDate: {
+    type: Date, 
+   },
+  issuingAuthority: {
+    type: String,
+    enum: [
+      'Medical Council of India',
+      'State Medical Council',
+      'National Medical Commission',
+      'World Medical Association',
+      'Other',
+    ],
+  },
+
     address: { 
       type: String, 
-      required: true 
     },
     city:{
       type:String,
-      required:true
     },
     pincode: {
       type: String,
-      required: true,
     },
     state: {
       type: String,
-      required: true,
     },
     country: {
       type: String,
-      required: true,
     },
     images:[String],
      specialization: {
        type: String, 
      },
        location: {
-        type: { type: String, enum: ["Point"], required: true },
-        coordinates: { type: [Number], required: true },
+        type: { type: String, enum: ["Point"], },
+        coordinates: { type: [Number],  },
       },
     
     });

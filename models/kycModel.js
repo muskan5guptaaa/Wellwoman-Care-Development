@@ -29,7 +29,7 @@ const doctorKycSchema = new mongoose.Schema({
   },
  documentType: {
         type: String,
-        enum: ["Passport", "Driver's License", "Aadhar card","Pan Card", "Medical License"],
+        enum: ["Passport", "Driver's License", "Aadhar card","Pan Card", ],
         required: true,
       },
  documentNumber: {
