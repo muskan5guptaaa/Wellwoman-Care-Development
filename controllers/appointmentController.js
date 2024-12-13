@@ -4,42 +4,52 @@ const Doctor=require("../models/doctorsModel");
 
   const mongoose = require('mongoose');
 
-const getDoctorSchedule = async (req, res) => {
-  try {
-    const { doctorId, date } = req.query;
-
-    // Validate doctorId
-    if (!mongoose.isValidObjectId(doctorId)) {
-      return res.status(400).json({ message: "Invalid doctorId." });
+  const getDoctorSchedule = async (req, res) => {
+    try {
+      const { doctorId, date } = req.query;
+  
+      // Validate doctorId
+      if (!mongoose.isValidObjectId(doctorId)) {
+        return res.status(400).json({ message: "Invalid doctorId." });
+      }
+  
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        return res.status(404).json({ message: "Doctor not found." });
+      }
+  
+      // Convert date to day of the week
+      const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
+  
+      // Get doctor's availability for the day
+      const availability = doctor.availability.find((slot) => slot.day === dayOfWeek);
+      if (!availability) {
+        return res.status(400).json({ message: `Doctor is not available on ${dayOfWeek}.` });
+      }
+  
+      // Fetch all appointments for the doctor on the specified date
+      const appointments = await Appointment.find({
+        doctorId,
+        date,
+        status: "Booked",  // Only check appointments with status "Booked"
+      });
+  
+      // Map through the available time slots and check if each one is booked
+      const schedule = availability.timeSlots.map((timeSlot) => {
+        const isBooked = appointments.some((appt) => appt.timeSlot === timeSlot);
+        return {
+          timeSlot,
+          status: isBooked ? "Booked" : "Available",
+        };
+      });
+  
+      res.status(200).json({ schedule });
+    } catch (error) {
+      console.error("Error fetching doctor schedule:", error);
+      res.status(500).json({ message: "Server error", error });
     }
-
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found." });
-    }
-
-    const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
-
-    const availability = doctor.availability.find((slot) => slot.day === dayOfWeek);
-    if (!availability) {
-      return res.status(400).json({ message: `Doctor is not available on ${dayOfWeek}.` });
-    }
-
-    const appointments = await Appointment.find({ doctorId, date });
-    const schedule = availability.timeSlots.map((timeSlot) => {
-      const isBooked = appointments.some((appt) => appt.timeSlot === timeSlot);
-      return {
-        timeSlot,
-        status: isBooked ? "Booked" : "Available",
-      };
-    });
-
-    res.status(200).json({ schedule });
-  } catch (error) {
-    console.error("Error fetching doctor schedule:", error);
-    res.status(500).json({ message: "Server error", error });
-  }
-};
+  };
+  
 
   
   // Book Appointment Controller
@@ -65,10 +75,7 @@ const getDoctorSchedule = async (req, res) => {
         return res.status(400).json({ message: `Doctor is not available on ${dayOfWeek}.` });
       }
   
-      // Check if the provided time slot is valid
-      if (!availability.timeSlots.includes(timeSlot)) {
-        return res.status(400).json({ message: "Invalid or unavailable time slot." });
-      }
+      
   
       // Ensure the appointment type matches the doctor's availability
       if (availability.appointmentType !== "both" && availability.appointmentType !== appointmentType) {
@@ -92,7 +99,8 @@ const getDoctorSchedule = async (req, res) => {
         date,
         timeSlot,
         appointmentType,
-        problemDescription
+        problemDescription,
+        status:"Booked"
       });
        await newAppointment.save();
         res.status(201).json({

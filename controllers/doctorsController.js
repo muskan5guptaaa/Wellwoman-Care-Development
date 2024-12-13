@@ -641,7 +641,6 @@ const updateAvailabilityDoctor = async (req, res) => {
   }
 };
 
-module.exports = { updateAvailabilityDoctor };
 
 
 
