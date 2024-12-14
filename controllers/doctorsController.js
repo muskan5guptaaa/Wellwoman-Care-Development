@@ -585,7 +585,7 @@ const updateAvailabilityDoctor = async (req, res) => {
       return res.status(400).json({ message: "Invalid day(s) provided." });
     }
 
-    // Function to generate time slots based on the provided start and end times
+    // Function to generate time slots based on the start and end times
     const generateTimeSlots = (startTime, endTime) => {
       const slots = [];
       const start = new Date(`1970-01-01T${startTime}:00`);
@@ -617,23 +617,19 @@ const updateAvailabilityDoctor = async (req, res) => {
       return res.status(404).json({ message: "Doctor not found." });
     }
 
-    // Update the doctor's specialization if provided
     if (specialization) {
-      doctor.specialization = specialization; // Update specialization
+      doctor.specialization = specialization; 
     }
 
-    // Update the availability
     doctor.availability = availability;
     
-    // Save the updated doctor document
     await doctor.save();
 
-    // Return success response
     res.status(200).json({
       success: true,
       message: "Doctor availability and specialization updated successfully.",
       availability: doctor.availability,
-      specialization: doctor.specialization,  // Include updated specialization in response
+      specialization: doctor.specialization, 
     });
   } catch (error) {
     console.error("Error updating doctor availability:", error);

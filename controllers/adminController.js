@@ -114,7 +114,7 @@ const addMedicalProduct = async (req, res) => {
       stock,
       category,
       image,
-      createdBy: req.admin?._id // Optional chaining in case req.user is undefined
+      createdBy: req.admin?._id 
       
     });
 
@@ -136,14 +136,14 @@ const addMedicalProduct = async (req, res) => {
 };
 
 const updateMedicalProduct = async (req, res) => {
-  const { id } = req.params; // Product ID from request params
-  const updateData = req.body; // Updated product data from request body
+  const { id } = req.params; 
+  const updateData = req.body; 
 
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       updateData,
-      { new: true, runValidators: true } // Return the updated document and validate the data
+      { new: true, runValidators: true } 
     );
 
     if (!updatedProduct) {
@@ -169,8 +169,7 @@ const updateMedicalProduct = async (req, res) => {
 };
 
 const deleteMedicalProduct = async (req, res) => {
-  const { id } = req.params; // Product ID from request params
-
+  const { id } = req.params; 
   try {
     const deletedProduct = await Product.findByIdAndDelete(id);
 
@@ -196,8 +195,7 @@ const deleteMedicalProduct = async (req, res) => {
 };
 
 const getProductDetails = async (req, res) => {
-  const { productId } = req.params; // Product ID from the URL parameter
-
+  const { productId } = req.params; 
   try {
     const product = await Product.findById(productId);
 
@@ -225,27 +223,25 @@ const getProductDetails = async (req, res) => {
 
 
 const getAllProducts = async (req, res) => {
-  const { search } = req.query; // Get search query from request URL (query parameter)
+  const { search } = req.query;
 
   try {
     // Build the search filter object
     let searchFilter = {};
 
-    // If search query is provided, apply it to product name and category
     if (search) {
-      const regex = new RegExp(search, 'i'); // Case-insensitive regex for searching
+      const regex = new RegExp(search, 'i');
       searchFilter = {
         $or: [
-          { name: { $regex: regex } }, // Search by product name
-          { category: { $regex: regex } } // Search by category
+          { name: { $regex: regex } }, 
+          { category: { $regex: regex } }
         ]
       };
     }
 
     // Fetch all products with optional search filter
-    const products = await Product.find(searchFilter).populate('createdBy', 'name email'); // Populate admin details
+    const products = await Product.find(searchFilter).populate('createdBy', 'name email');
 
-    // Check if no products are found
     if (products.length === 0) {
       return res.status(404).json({
         success: false,
@@ -253,7 +249,6 @@ const getAllProducts = async (req, res) => {
       });
     }
 
-    // Respond with the products list and additional details like admin's name and email
     res.status(200).json({
       success: true,
       message: "Products retrieved successfully",

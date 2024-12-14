@@ -556,10 +556,10 @@ const addToCart = async (req, res) => {
   }
 };
 const updateCart = async (req, res) => {
-  const { productId, quantity } = req.body; // Receive productId and quantity from the request body
+  const { productId, quantity } = req.body; 
 
   try {
-    const userId = req.user._id; // Get the user's ID
+    const userId = req.user._id; 
 
     // Find the cart item and update it
     let cartItem = await Cart.findOne({ userId, productId });
@@ -595,7 +595,7 @@ const updateCart = async (req, res) => {
 };
 const searchProducts = async (req, res) => {
   try {
-    const { keyword } = req.query; // Get the search keyword from query params
+    const { keyword } = req.query; 
 
     if (!keyword) {
       return res.status(400).json({
@@ -670,14 +670,14 @@ const getUserCart = async (req, res) => {
 
     const cartData = await Cart.aggregate([
       {
-        $match: { userId: new mongoose.Types.ObjectId(userId) }, // Match userId
+        $match: { userId: new mongoose.Types.ObjectId(userId) }, 
       },
       {
         $unwind: "$products",
       },
       {
         $lookup: {
-          from: "products", // Ensure this matches your Product collection name
+          from: "products",
           localField: "products.productId",
           foreignField: "_id",
           as: "productDetails",
@@ -745,37 +745,65 @@ const saveProduct = async (req, res) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res.status(404).json({
+         success: false,
+          message: "Product not found" 
+      });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+       success: false,
+       message: "User not found" 
+    });
     }
 
     if (action === "add") {
       if (user.savedProducts.includes(productId)) {
-        return res.status(400).json({ success: false, message: "Product already saved" });
+        return res.status(400).json({ 
+        success: false,
+       message: "Product already saved"
+     });
       }
       user.savedProducts.push(productId);
       await user.save();
-      return res.status(200).json({ success: true, message: "Product added to saved list", savedProducts: user.savedProducts });
+      return res.status(200).json({
+       success: true, 
+       message: "Product added to saved list", 
+       savedProducts: user.savedProducts 
+    });
     } else if (action === "remove") {
       const index = user.savedProducts.indexOf(productId);
       if (index === -1) {
-        return res.status(400).json({ success: false, message: "Product not in saved list" });
+        return res.status(400).json({
+         success: false,
+         message: "Product not in saved list" 
+         });
       }
       user.savedProducts.splice(index, 1);
       await user.save();
-      return res.status(200).json({ success: true, message: "Product removed from saved list", savedProducts: user.savedProducts });
+      return res.status(200).json({ 
+      success: true, 
+      message: "Product removed from saved list", 
+      savedProducts: user.savedProducts 
+    });
     } else {
-      return res.status(400).json({ success: false, message: "Invalid action. Use 'add' or 'remove'." });
+      return res.status(400).json({
+       success: false, 
+       message: "Invalid action. Use 'add' or 'remove'." 
+      });
     }
   } catch (error) {
     console.error("Error saving product:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(500).json({ 
+    success: false,
+   message: "Internal Server Error"
+   });
   }
 };
+
+
 const getSavedProducts = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -815,13 +843,20 @@ const getSavedProducts = async (req, res) => {
     ]);
 
     if (!user || user.length === 0) {
-      return res.status(404).json({ success: false, message: "User not found or no saved products" });
+      return res.status(404).json({ success: false, 
+      message: "User not found or no saved products"
+   });
     }
 
-    return res.status(200).json({ success: true, savedProducts: user.map((u) => u.savedProducts) });
+    return res.status(200).json({
+     success: true, 
+     savedProducts: user.map((u) => u.savedProducts)
+     });
   } catch (error) {
     console.error("Error fetching saved products:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    return res.status(500).json({
+       success: false,
+        message: "Internal Server Error" });
   }
 };
 
