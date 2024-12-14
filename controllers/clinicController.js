@@ -58,12 +58,11 @@ const createClinic = async (req, res) => {
 
     await newClinic.save();
 
-    // Return success response with clinicId
     return res.status(201).json({
       success: true,
       message: "Clinic created successfully.",
       data: {
-        clinicId: newClinic._id, // Include clinicId here
+        clinicId: newClinic._id, 
         name: newClinic.name,
         location: newClinic.location,
         address: newClinic.address,

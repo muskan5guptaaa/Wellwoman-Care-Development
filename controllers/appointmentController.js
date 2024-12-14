@@ -81,7 +81,7 @@ const Doctor=require("../models/doctorsModel");
         return res.status(404).json({ message: "Doctor not found." });
       }
   
-      // Check if the doctor is available on the given day
+      // Check  doctor is available on the given day
       const availability = doctor.availability.find((slot) => slot.day === dayOfWeek);
       if (!availability) {
         return res.status(400).json({ message: `Doctor is not available on ${dayOfWeek}.` });
