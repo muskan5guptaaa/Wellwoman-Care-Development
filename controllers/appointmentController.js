@@ -164,11 +164,60 @@ const bookOnlineAppointment = async (req, res) => {
   
 //for cancel appointment
 
+// Cancel Appointment Controller
+const cancelAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params; // Get appointmentId from the request parameters
+
+    // Validate if the appointmentId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+      return res.status(400).json({ message: "Invalid appointment ID format." });
+    }
+
+    // Find the appointment by ID
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found." });
+    }
+
+    // Check if the appointment status is already 'Cancelled'
+    if (appointment.status === "Cancelled") {
+      return res.status(400).json({ message: "This appointment is already cancelled." });
+    }
+
+    // Check if the appointment is already completed or past, cannot cancel it
+    const currentDate = new Date();
+    const appointmentDate = new Date(appointment.date);
+    if (appointmentDate < currentDate) {
+      return res.status(400).json({ message: "Cannot cancel past appointments." });
+    }
+
+    // Update the appointment status to 'Cancelled'
+    appointment.status = "Cancelled";
+    await appointment.save();
+
+    // Send success response
+    res.status(200).json({
+      success: true,
+      message: "Appointment cancelled successfully.",
+      appointment: appointment,
+    });
+  } catch (error) {
+    console.error("Error canceling appointment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error,
+    });
+  }
+};
 
 
   
 module.exports={
     getDoctorSchedule,
     bookOnlineAppointment,
-    getAllAppointmentsForUser
+    getAllAppointmentsForUser,
+    cancelAppointment
 }  
