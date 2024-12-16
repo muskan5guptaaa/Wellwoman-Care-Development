@@ -2,6 +2,7 @@ const mongoose=require("mongoose");
 const Clinic=require("../models/clinicModel")
 const Doctor=require("../models/doctorsModel")
 const Rating = require("../models/ratingModel");
+const Appointment=require("../models/appointmentModel")
 const {nearbyClinicsSV} = require('../schemaValidator/clinicValidator');
 const User = require("../models/userModel");
 
@@ -282,6 +283,82 @@ const getClinicById = async (req, res) => {
 };
 
 
+
+// Book Offline Appointment
+const bookOfflineAppointment = async (req, res) => {
+  try {
+    const { doctorId, userId, date, timeSlot, problemDescription } = req.body;
+
+    // Validate required fields
+    if (!doctorId || !userId || !date || !timeSlot) {
+      return res.status(400).json({ message: "All fields are required for offline appointments." });
+    }
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(doctorId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid doctor or user ID format." });
+    }
+
+    const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
+
+    // Find the doctor
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found." });
+    }
+
+    // Check doctor's availability for offline appointments
+    const availability = doctor.availability.find(
+      (slot) => slot.day === dayOfWeek && slot.appointmentType === "offline"
+    );
+
+    if (!availability) {
+      return res.status(400).json({ message: `Doctor is not available for offline appointments on ${dayOfWeek}.` });
+    }
+
+    // Validate the time slot
+    if (!availability.timeSlots.includes(timeSlot)) {
+      return res.status(400).json({ message: `Invalid time slot for offline appointments on ${dayOfWeek}.` });
+    }
+
+    // Check if the time slot is already booked
+    const existingAppointment = await Appointment.findOne({
+      doctorId,
+      date,
+      timeSlot,
+      appointmentType: "offline",
+      status: "Booked",
+    });
+    if (existingAppointment) {
+      return res.status(400).json({ message: "Time slot is already booked for offline appointments." });
+    }
+
+    // Book the appointment
+    const newAppointment = new Appointment({
+      doctorId,
+      userId,
+      date,
+      timeSlot,
+      appointmentType: "offline",
+      problemDescription,
+      status: "Booked",
+    });
+
+    await newAppointment.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Offline appointment booked successfully.",
+      appointment: newAppointment,
+    });
+  } catch (error) {
+    console.error("Error booking offline appointment:", error);
+    res.status(500).json({ success: false, message: "Server error", error });
+  }
+};
+
+
+
 const addClinicRating = async (req, res) => {
   try {
     const { clinicId, rating, comment } = req.body;
@@ -368,6 +445,7 @@ const getClinicRatings = async (req, res) => {
     getAllClinics,
     deleteClinic,
     saveDoctorCredentials,
+    bookOfflineAppointment
     
    };
   

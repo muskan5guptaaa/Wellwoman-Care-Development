@@ -17,9 +17,11 @@ router.post("/user/sendOtp",userController.sendOtpUser);
 router.get("/user/getUserProfile",userController.getUserProfile)
 
 
-router.post("/user/:doctorId/new", appointmentController.bookAppointment);
 router.get("/user/schedule",appointmentController.getDoctorSchedule)
 router.get("/user/all/:userId",appointmentController.getAllAppointmentsForUser)
+router.post("/appointments/offline",clinicController.bookOfflineAppointment);
+router.post("/appointments/online",appointmentController.bookOnlineAppointment)
+
 
 //Products apis
 router.post("/user/add",userController.addToCart)
