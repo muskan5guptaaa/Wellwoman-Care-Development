@@ -161,13 +161,75 @@ const bookOnlineAppointment = async (req, res) => {
     }
   };
 
+  const getUpcomingAppointmentsForDoctor = async (req, res) => {
+    try {
+      const { doctorId } = req.params;
   
-//for cancel appointment
+      // Validate the doctorId
+      if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+        return res.status(400).json({ message: "Invalid doctor ID." });
+      }
+  
+      // Get the current date and the date one week from now
+      const currentDate = new Date();
+      const oneWeekLater = new Date();
+      oneWeekLater.setDate(currentDate.getDate() + 7);
+  
+      const appointments = await Appointment.aggregate([
+       
+        {
+          $match: {
+            doctorId: new mongoose.Types.ObjectId(doctorId),
+            date: { $gte: currentDate, $lte: oneWeekLater },
+            status: "Booked", 
+          },
+        },
+  
+        {
+          $lookup: {
+            from: "doctors", 
+            localField: "doctorId",
+            foreignField: "_id",
+            as: "doctorDetails",
+          },
+        },
+  
+        {
+          $project: {
+            date: 1,
+            timeSlot: 1,
+            appointmentType: 1,
+            problemDescription: 1,
+            doctorDetails: { name: 1, specialization: 1 }, 
+          },
+        },
+  
+        // Sort by date and time slot
+        {
+          $sort: { date: 1, timeSlot: 1 },
+        },
+      ]);
+  
+      if (appointments.length === 0) {
+        return res.status(200).json({ message: "No upcoming appointments found." });
+      }
+  
+      res.status(200).json({
+        success: true,
+        message: "Upcoming appointments fetched successfully.",
+        appointments,
+      });
+    } catch (error) {
+      console.error("Error fetching upcoming appointments:", error);
+      res.status(500).json({ success: false, message: "Server error", error });
+    }
+  };
+  
 
 // Cancel Appointment Controller
 const cancelAppointment = async (req, res) => {
   try {
-    const { appointmentId } = req.params; // Get appointmentId from the request parameters
+    const { appointmentId } = req.params;
 
     // Validate if the appointmentId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
@@ -219,5 +281,6 @@ module.exports={
     getDoctorSchedule,
     bookOnlineAppointment,
     getAllAppointmentsForUser,
-    cancelAppointment
+    cancelAppointment,
+    getUpcomingAppointmentsForDoctor
 }  

@@ -149,8 +149,7 @@ const getClinicById = async (req, res) => {
       } = req.query;
   
       const filter = {};
-
-
+  
       // Apply filters
       if (name) {
         filter.name = { $regex: name, $options: "i" }; // Case-insensitive search
@@ -168,11 +167,22 @@ const getClinicById = async (req, res) => {
       // Lookup for doctor name if provided
       if (doctorName) {
         const doctors = await Doctor.find(
-          { name: { $regex: name, $options: "i" } },
+          { name: { $regex: doctorName, $options: "i" } },
           "_id"
         );
-        const doctorIds = doctors.map((doc) => doc._id);
-        filter.doctorId = { $in: doctorIds};
+        
+        // Ensure we have valid doctorIds to use
+        if (doctors.length > 0) {
+          const doctorIds = doctors.map((doc) => doc._id);
+          filter.doctorId = { $in: doctorIds }; // Use valid doctor IDs in the filter
+        } else {
+          // If no doctor matches the provided name, return an empty response
+          return res.status(200).json({
+            success: false,
+            message: "No doctors found with the given name.",
+            data: [],
+          });
+        }
       }
   
       // Aggregate query for clinics
@@ -242,46 +252,78 @@ const getClinicById = async (req, res) => {
     }
   };
   
-
+  
 
   const getNearbyClinics = async (req, res) => {
-  try {
-    const { latitude, longitude, maxDistance = 5000 } = req.query; // Default max distance = 5000 meters (5 km)
-
-    // Validate inputs
-    if (!latitude || !longitude) {
-      return res.status(400).json({
+    try {
+      const { latitude, longitude, maxDistance = 5000 } = req.query; // Default max distance = 5000 meters (5 km)
+  
+      // Validate inputs
+      if (!latitude || !longitude) {
+        return res.status(400).json({
+          success: false,
+          message: "Latitude and longitude are required.",
+        });
+      }
+  
+      // Build the aggregation pipeline
+      const pipeline = [
+        {
+          $geoNear: {
+            near: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+            distanceField: "distance",
+            maxDistance: parseInt(maxDistance, 10),
+            spherical: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "doctors", 
+            localField: "doctorId",
+            foreignField: "_id",
+            as: "doctor", 
+          },
+        },
+        {
+          $unwind: "$doctor", 
+        },
+        {
+          $project: {
+            name: 1,
+            location: 1,
+            doctorName: "$doctor.name",
+            doctorEmail: "$doctor.email",
+            doctorSpecialization: "$doctor.specialization",
+            distance: 1, 
+          },
+        },
+      ];
+  
+      // Execute the aggregation query
+      const nearbyClinics = await Clinic.aggregate(pipeline);
+  
+      if (!nearbyClinics.length) {
+        return res.status(200).json({
+          success: true,
+          message: "No nearby clinics found.",
+          data: [],
+        });
+      }
+  
+      return res.status(200).json({
+        success: true,
+        message: "Nearby clinics retrieved successfully.",
+        data: nearbyClinics,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
         success: false,
-        message: "Latitude and longitude are required.",
+        message: "Internal Server Error.",
       });
     }
-    // Find clinics near the given coordinates
-    const nearbyClinics = await Clinic.find({
-      location: {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-          },
-          $maxDistance: parseInt(maxDistance, 10), // Maximum distance in meters
-        },
-      },
-    }).populate("doctorId", "name email specialization"); 
-
-    return res.status(200).json({
-      success: true,
-      message: "Nearby clinics retrieved successfully.",
-      data: nearbyClinics,
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error.",
-    });
-  }
-};
-
+  };
+  
 
 
 // Book Offline Appointment

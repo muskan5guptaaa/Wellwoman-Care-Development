@@ -6,6 +6,7 @@ const OTP=require("../models/otpModel")
 const Token = require("../models/tokenmodel");
 const axios = require('axios');
 const Rating=require("../models/ratingModel")
+const Clinic=require("../models/clinicModel")
 const {forgetPasswordDoctorSV,sendOtpSV} = require('../schemaValidator/doctorValidator');
 const { generateOTP } = require('../utils/sendOtp');
 const mongoose=require("mongoose")
@@ -339,6 +340,64 @@ const forgetPasswordDoctor = async (req, res) => {
     }
   };
   
+  // Function to add or update address details
+const  updateAddress = async (req, res) => {
+  try {
+    const {
+      doctorId,
+      state,
+      localGovernment,
+      detailedAddress,
+      houseNumber,
+      landmark,
+      pincode,
+      city,
+      country,
+      proofOfAddressUrl,
+    } = req.body;
+
+    // Find the doctor by ID
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    // Update the address fields
+    doctor.address = {
+      state,
+      localGovernment,
+      detailedAddress,
+      houseNumber,
+      landmark,
+      pincode,
+      city,
+      country,
+    };
+
+    // Update the proof of address URL if provided
+    if (proofOfAddressUrl) {
+      doctor.proofOfAddress = proofOfAddressUrl;
+    }
+
+    // Save the updated doctor data
+    await doctor.save();
+
+    // Respond with only the updated address
+    return res.status(200).json({
+      message: "Address details updated successfully",
+      address: doctor.address, // Send only the address
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+
+
 
   const logoutDoctor = async (req, res) => {
     try {
@@ -650,7 +709,7 @@ const getTopRatedDoctors = async (req, res) => {
         $group: {
           _id: "$doctorId", 
           averageRating: { $avg: "$rating" }, // Calculate average rating
-          ratingCount: { $sum: 1 }, // Count the number of ratings
+          ratingCount: { $sum: 1 }, 
         },
       },
       {
@@ -673,10 +732,6 @@ const getTopRatedDoctors = async (req, res) => {
           "doctorDetails.name": 1,
           "doctorDetails.specialization": 1,
           "doctorDetails.experience": 1,
-          "doctorDetails.clinicAddress": 1,
-          "doctorDetails.city": 1,
-          "doctorDetails.state": 1,
-          "doctorDetails.country": 1,
         },
       },
       {
@@ -706,45 +761,89 @@ const getTopRatedDoctors = async (req, res) => {
     });
   }
 };
-
 const getDoctorDetails = async (req, res) => {
   try {
-    const { doctorId } = req.query; 
+    const { doctorId } = req.params;
 
-    const doctor = await Doctor.findById(doctorId).select(
-      "name specialization availability"
-    );
-
-    if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+    // Validate doctorId
+    if (!mongoose.isValidObjectId(doctorId)) {
+      return res.status(400).json({ error: "Invalid doctor ID" });
     }
-    const doctorDetails = {
-      name: doctor.name,
-      specialization: doctor.specialization,
-      availability: doctor.availability.map((slot) => ({
-      day: slot.day,
-      timeSlots: slot.timeSlots,
-      appointmentType: slot.appointmentType,
-      })),
-    };
 
-    res.status(200).json({
-      success: true,
-      data: doctorDetails,
-    });
+    const doctorDetails = await Doctor.aggregate([
+      // Match the doctor by ID
+      { $match: { _id: mongoose.Types.ObjectId(doctorId) } },
+
+      // Lookup for total patients consulted
+      {
+        $lookup: {
+          from: "users", 
+          localField: "_id",
+          foreignField: "doctorId",
+          as: "users",
+        },
+      },
+
+      // Lookup for ratings
+      {
+        $lookup: {
+          from: "ratings", 
+          localField: "_id",
+          foreignField: "doctorId",
+          as: "ratings",
+        },
+      },
+
+      // Add calculated fields
+      {
+        $addFields: {
+          totalUsers: { $size: "$users" }, 
+          averageRating: { $ifNull: [{ $avg: "$ratings.rating" }, 0] }, 
+        },
+      },
+
+      // Project the necessary fields
+      {
+        $project: {
+          name: 1, // Doctor's name
+          specialization: 1, // Doctor's specialization
+          experience: 1, // Doctor's experience in years
+          totalUsers: 1, // Total patients consulted
+          averageRating: 1, // Average rating
+          timeSlots: 1, // Working hours
+          appointmentType: 1, // Consultation mode (online/offline)
+          clinicDetails: 1, // Clinic details (if offline consultation is available)
+          // Ensure no reference to bank details here
+        },
+      },
+    ]);
+
+    if (doctorDetails.length > 0) {
+      const doctor = doctorDetails[0];
+
+      return res.json({
+        statistics: {
+          totalUsers: doctor.totalUsers,
+          experience: `${doctor.experience} Years`,
+          rating: doctor.averageRating.toFixed(1),
+        },
+        details: {
+          name: doctor.name,
+          specialization: doctor.specialization,
+          timeSlots: doctor.workingHours?.time || "Not Available",
+          appointmentType: doctor.workingHours?.days || "Not Available",
+          onlineConsultation: doctor.consultationMode.includes("online"),
+          offlineConsultation: doctor.consultationMode.includes("offline"),
+        },
+      });
+    } else {
+      throw new Error("Doctor not found.");
+    }
   } catch (error) {
     console.error("Error fetching doctor details:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error. Please try again later.",
-    });
+    return res.status(500).json({ success: false, message: "Unable to fetch doctor details." });
   }
 };
-
-
 
 
 module.exports = {
@@ -752,6 +851,7 @@ module.exports = {
     loginDoctor,
     forgetPasswordDoctor,
     changePasswordDoctor,
+    updateAddress,
     editDoctorProfile,
     showDoctorProfile,
     getAllDoctors,

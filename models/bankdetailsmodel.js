@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 
 const bankDetailsSchema = new mongoose.Schema({
   doctorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Doctor",
-    required: true,
-  },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+    },
   bankName: {
     type: String,
     required: true,

@@ -24,26 +24,21 @@ const doctorSchema = new mongoose.Schema({
 
       },
     ],
-   address: {
-      type: String,
+    address: {
+      state: { type: String },
+      localGovernment: { type: String },
+      detailedAddress: { type: String},
+      houseNumber: { type: String},
+      landmark: { type: String }, 
+      pincode: { type: String},
+      city: { type: String},
+      country: { type: String},
+    },
+    proofOfAddress: {
+      type: String, 
       required: false,
     },
-   city: {
-      type: String,
-      required: false,
-    },
-    pincode: {
-      type: String,
-      required: false,
-    },
-    state: {
-      type: String,
-      required: false,
-    },
-    country: {
-      type: String,
-      required: false,
-    },
+  
   specialization: {
      type: String
     },
