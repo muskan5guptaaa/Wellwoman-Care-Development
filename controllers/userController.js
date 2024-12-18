@@ -271,34 +271,53 @@ const forgetPassword = async (req, res) => {
 //User edit profile
 const editProfile = async (req, res) => {
   try {
+    // Validate the request body using Joi
     const validateReqBody = await updateProfileSV.validateAsync(req.body);
-    const userId = req.userId;
 
-    // Find and update the user profile
-    const updatedUser = await User.findByIdAndUpdate(userId, validateReqBody, {
-      new: true,
-    });
+    // Extract userId from the request body
+    const {userId} = req.params
 
-    if (!updatedUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
     }
 
+    // Find and update the user profile
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,                // Filter by userId
+    
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Send success response
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: updatedUser,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error updating profile:", err);
+
+    // Handle Joi validation errors
     if (err.isJoi) {
       return res.status(400).json({
         success: false,
         message: err.details[0].message,
       });
     }
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+
+    // Handle other server errors
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -462,6 +481,8 @@ const getUserProfile = async (req, res) => {
 
     const userProfile = await User.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+
+      // Project user details
       {
         $project: {
           name: 1,
@@ -475,6 +496,27 @@ const getUserProfile = async (req, res) => {
           weight: 1,
           medicalHistory: 1,
           healthMetrics: 1,
+          savedProducts: 1, // Assuming savedProducts exist in the User model
+        },
+      },
+
+      // Lookup for Appointments
+      {
+        $lookup: {
+          from: "appointments", // Name of the appointments collection
+          localField: "_id",
+          foreignField: "userId",
+          as: "appointments",
+        },
+      },
+
+      // Lookup for Saved Products (if stored as references)
+      {
+        $lookup: {
+          from: "products", // Name of the products collection
+          localField: "savedProducts", // Field in User model that stores product IDs
+          foreignField: "_id",
+          as: "savedProductsDetails",
         },
       },
     ]);
@@ -488,13 +530,24 @@ const getUserProfile = async (req, res) => {
 
     res.status(200).json({
       profile: {
-        ...profile,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        gender: profile.gender,
+        dateOfBirth: profile.dateOfBirth,
+        address: profile.address,
+        Diseases: profile.Diseases,
+        height: profile.height,
+        weight: profile.weight,
+        medicalHistory: profile.medicalHistory,
         healthMetrics: {
           bloodPressure: healthMetrics.bloodPressure || "Data not available",
           heartRate: healthMetrics.heartRate || "Data not available",
           bodyTemperature: healthMetrics.bodyTemperature || "Data not available",
           bloodGlucose: healthMetrics.bloodGlucose || "Data not available",
         },
+        appointments: profile.appointments , 
+        savedProducts: profile.savedProductsDetails 
       },
     });
   } catch (error) {

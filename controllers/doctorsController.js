@@ -761,6 +761,8 @@ const getTopRatedDoctors = async (req, res) => {
     });
   }
 };
+
+
 const getDoctorDetails = async (req, res) => {
   try {
     const { doctorId } = req.params;
@@ -771,10 +773,8 @@ const getDoctorDetails = async (req, res) => {
     }
 
     const doctorDetails = await Doctor.aggregate([
-      // Match the doctor by ID
       { $match: { _id: mongoose.Types.ObjectId(doctorId) } },
 
-      // Lookup for total patients consulted
       {
         $lookup: {
           from: "users", 
@@ -784,7 +784,6 @@ const getDoctorDetails = async (req, res) => {
         },
       },
 
-      // Lookup for ratings
       {
         $lookup: {
           from: "ratings", 
@@ -794,7 +793,6 @@ const getDoctorDetails = async (req, res) => {
         },
       },
 
-      // Add calculated fields
       {
         $addFields: {
           totalUsers: { $size: "$users" }, 
@@ -805,15 +803,14 @@ const getDoctorDetails = async (req, res) => {
       // Project the necessary fields
       {
         $project: {
-          name: 1, // Doctor's name
-          specialization: 1, // Doctor's specialization
-          experience: 1, // Doctor's experience in years
-          totalUsers: 1, // Total patients consulted
-          averageRating: 1, // Average rating
-          timeSlots: 1, // Working hours
-          appointmentType: 1, // Consultation mode (online/offline)
-          clinicDetails: 1, // Clinic details (if offline consultation is available)
-          // Ensure no reference to bank details here
+          name: 1, 
+          specialization: 1,
+          experience: 1, 
+          totalUsers: 1,
+          averageRating: 1,
+          timeSlots: 1,
+          appointmentType: 1,
+          clinicDetails: 1,
         },
       },
     ]);

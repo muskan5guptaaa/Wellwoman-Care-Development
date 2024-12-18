@@ -18,18 +18,12 @@ exports.forgetPasswordSV = Joi.object({
   email: Joi.string().email().required(),
 });
 
-const  updateProfileSV = Joi.object({
-    name: Joi.string().optional(),
-    avatar: Joi.string().uri().optional(),
-    gender: Joi.string().valid("male", "female", "other").optional(),
-    address: Joi.string().optional(),
-    city: Joi.string().optional(),
-    pincode: Joi.string()
-      .pattern(/^[0-9]{5,10}$/)
-      .optional(),
-    state: Joi.string().optional(),
-    country: Joi.string().optional(),
-  });
+const updateProfileSV = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().length(10).pattern(/^[0-9]+$/).required(),
+  dateOfBirth: Joi.date().iso().required(),
+});
 
   const forgetPasswordSV = Joi.object({
     email: Joi.string().email().required(),

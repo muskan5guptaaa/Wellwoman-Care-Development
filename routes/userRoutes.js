@@ -15,6 +15,7 @@ router.post("/user/forgetPassword",userController.forgetPassword);
 router.post("/user/logout",userController.logout);
 router.post("/user/sendOtp",userController.sendOtpUser);
 router.get("/user/getUserProfile",userController.getUserProfile)
+router.put("/user/edit",userController.editProfile)
 
 
 router.get("/user/schedule",appointmentController.getDoctorSchedule)

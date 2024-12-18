@@ -9,6 +9,7 @@ const doctorRoutes = require('./routes/doctorsRoute');
 const kycRoute = require("./routes/kycRoute");
 const adminRoute = require("./routes/adminRoute");
 const ratingRoute=require("./routes/ratingRoute");
+const notificationRoute=require("./routes/notificationRoute")
 
 dotenv.config();
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api', doctorRoutes);
 app.use('/api', kycRoute);
 app.use('/api',adminRoute);
 app.use('/api',membershipRoutes);
+app.use('/api',notificationRoute)
 app.use('/api',ratingRoute)
 
 const PORT = process.env.PORT || 5000;
