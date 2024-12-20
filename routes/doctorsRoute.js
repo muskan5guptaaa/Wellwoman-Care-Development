@@ -24,6 +24,9 @@ router.post("/doctor/personalInfo/:doctorId",doctorController.saveDoctorPersonal
 // Doctor availability and appointments
 router.put('/doctor/:doctorId/availability', doctorController.updateAvailabilityDoctor);
 router.get("/appointments/upcoming/:doctorId",appointmentController.getUpcomingAppointmentsForDoctor)
+router.post("/user/verify/:doctorId",appointmentController.verifyPayment)
+router.get("/appointment/status/:appointmentId", appointmentController.getOnlineAppointmentStatus);
+
 
 // Bank details routes
 router.post("/doctor/bank-details", createBankDetail);

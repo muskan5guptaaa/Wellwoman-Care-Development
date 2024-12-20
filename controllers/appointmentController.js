@@ -2,7 +2,9 @@ const Appointment = require("../models/appointmentModel");
 const Doctor=require("../models/doctorsModel");
   const User=require("../models/userModel")
   const mongoose = require('mongoose');
- 
+  const Razorpay = require("razorpay");
+const crypto = require("crypto");
+
 
   const getDoctorSchedule = async (req, res) => {
     try {
@@ -56,79 +58,192 @@ const Doctor=require("../models/doctorsModel");
     }
   };
   
+    // Test API Key
+const razorpay = new Razorpay({
+  key_id: "rzp_test_Pj0gCrLiWmvapz", 
+  key_secret: "nBoX60Pp7uCTv5mJxPpkdfty", 
+});
+  
   // Book Online Appointment
-const bookOnlineAppointment = async (req, res) => {
-  try {
-    const { doctorId, userId, date, timeSlot, problemDescription } = req.body;
+  const bookOnlineAppointment = async (req, res) => {
+    try {
+      const { doctorId, userId, date, timeSlot, problemDescription, amount } = req.body;
+  
+      // Validate required fields
+      if (!doctorId || !userId || !date || !timeSlot || !amount) {
+        return res.status(400).json({
+           message: "All fields are required for online appointments." 
+        });
+      }
+  
+      // Validate IDs
+      if (!mongoose.Types.ObjectId.isValid(doctorId) || !mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+           message: "Invalid doctor or user ID format."
+         });
+      }
+  
+      const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
+  
+      // Find the doctor
+      const doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        return res.status(404).json({
+         message: "Doctor not found."
+       });
+      }
+  
+      // Check doctor's availability for online appointments
+      const availability = doctor.availability.find(
+        (slot) => slot.day === dayOfWeek && slot.appointmentType === "online"
+      );
+  
+      if (!availability) {
+        return res.status(400).json({
+         message: `Doctor is not available for online appointments on ${dayOfWeek}.` 
+      });
+      }
+  
+      // Validate the time slot
+      if (!availability.timeSlots.includes(timeSlot)) {
+        return res.status(400).json({
+         message: `Invalid time slot for online appointments on ${dayOfWeek}.` 
+      });
+      }
+  
+      // Check if the time slot is already booked
+      const existingAppointment = await Appointment.findOne({
+        doctorId,
+        date,
+        timeSlot,
+        appointmentType: "online",
+        status: "Booked",
+      });
+      if (existingAppointment) {
+        return res.status(400).json({
+         message: "Time slot is already booked for online appointments." 
+      });
+      }
+  
+      // Create a Razorpay order
+      const options = {
+        amount: amount * 100, // Amount in paise
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+        payment_capture: 1, // Auto-capture payment
 
-    // Validate required fields
-    if (!doctorId || !userId || !date || !timeSlot) {
-      return res.status(400).json({ message: "All fields are required for online appointments." });
-    }
-
-    // Validate IDs
-    if (!mongoose.Types.ObjectId.isValid(doctorId) || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid doctor or user ID format." });
-    }
-
-    const dayOfWeek = new Date(date).toLocaleString("en-US", { weekday: "long" });
-
-    // Find the doctor
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found." });
-    }
-
-    // Check doctor's availability for online appointments
-    const availability = doctor.availability.find(
-      (slot) => slot.day === dayOfWeek && slot.appointmentType === "online"
-    );
-
-    if (!availability) {
-      return res.status(400).json({ message: `Doctor is not available for online appointments on ${dayOfWeek}.` });
-    }
-
-    // Validate the time slot
-    if (!availability.timeSlots.includes(timeSlot)) {
-      return res.status(400).json({ message: `Invalid time slot for online appointments on ${dayOfWeek}.` });
-    }
-
-    // Check if the time slot is already booked
-    const existingAppointment = await Appointment.findOne({
-      doctorId,
-      date,
-      timeSlot,
-      appointmentType: "online",
-      status: "Booked",
+      };
+  
+      const order = await razorpay.orders.create(options);
+  
+      if (!order) {
+        return res.status(500).json({ 
+        success: false, 
+        message: "Unable to create order. Please try again." 
+      });
+      }
+  
+      res.status(201).json({
+        success: true,
+        message: "Appointment Booked. Proceed to payment.",
+        order,
+      });
+    } catch (error) {
+      console.error("Error booking online appointment:", error);
+      res.status(500).json({ 
+      success: false,
+     message: "Server error", 
+     error 
     });
-    if (existingAppointment) {
-      return res.status(400).json({ message: "Time slot is already booked for online appointments." });
     }
-
-    // Book the appointment
-    const newAppointment = new Appointment({
-      doctorId,
-      userId,
-      date,
-      timeSlot,
-      appointmentType: "online",
-      problemDescription,
-      status: "Booked",
-    });
-
-    await newAppointment.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Online appointment booked successfully.",
-      appointment: newAppointment,
-    });
-  } catch (error) {
-    console.error("Error booking online appointment:", error);
-    res.status(500).json({ success: false, message: "Server error", error });
-  }
-};
-
+  };
+  
+  const verifyPayment = async (req, res) => {
+    try {
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        doctorId,
+        userId,
+        date,
+        timeSlot,
+        problemDescription,
+      } = req.body;
+  
+      // Generate the server-side signature
+      const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+      hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+      const generated_signature = hmac.digest("hex");
+  
+      console.log("Generated Signature:", generated_signature); // Log the generated signature
+      console.log("Received Signature:", razorpay_signature);  // Log the received signature from Razorpay
+  
+      // Compare signatures
+      if (generated_signature !== razorpay_signature) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Payment verification failed. Signature mismatch.",
+        });
+      }
+  
+      // Payment is verified; book the appointment
+      const newAppointment = new Appointment({
+        doctorId,
+        userId,
+        date,
+        timeSlot,
+        appointmentType: "online",
+        problemDescription,
+        status: "Booked",
+      });
+  
+      await newAppointment.save();
+  
+      res.status(201).json({
+        success: true,
+        message: "Payment successful. Appointment booked.",
+        appointment: newAppointment,
+      });
+    } catch (error) {
+      console.error("Error verifying payment and booking appointment:", error);
+      res.status(500).json({ success: false, message: "Server error", error });
+    }
+  };
+  
+  const getOnlineAppointmentStatus = async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+  
+      // Validate appointment ID
+      if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid appointment ID format." 
+        });
+      }
+  
+      // Fetch the appointment details
+      const appointment = await Appointment.findById(appointmentId);
+  
+      if (!appointment) {
+        return res.status(404).json({
+          success: false,
+          message: "Appointment not found.",
+        });
+      }
+  
+      // Return the appointment status
+      res.status(200).json({
+        success: true,
+        message: "Appointment status retrieved successfully.",
+        appointmentStatus: appointment.status,
+      });
+    } catch (error) {
+      console.error("Error fetching appointment status:", error);
+      res.status(500).json({ success: false, message: "Server error", error });
+    }
+  };
   
   const getAllAppointmentsForUser = async (req, res) => {
     try {
@@ -282,5 +397,7 @@ module.exports={
     bookOnlineAppointment,
     getAllAppointmentsForUser,
     cancelAppointment,
-    getUpcomingAppointmentsForDoctor
+    getUpcomingAppointmentsForDoctor,
+    verifyPayment,
+    getOnlineAppointmentStatus
 }  
