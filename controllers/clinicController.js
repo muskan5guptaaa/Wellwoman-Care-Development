@@ -445,6 +445,8 @@ const addClinicRating = async (req, res) => {
 
 
 
+
+
 const getClinicRatings = async (req, res) => {
   try {
     const { clinicId } = req.params;
@@ -458,15 +460,26 @@ const getClinicRatings = async (req, res) => {
       });
     }
 
-    // Fetch ratings for the clinic
+    // Fetch ratings and calculate the average rating
     const ratings = await Rating.find({ clinicId })
-      .populate("userId", "name email") 
+      .populate("userId", "name email") // Populates user details
       .sort({ createdAt: -1 }); 
+
+    const totalRatings = ratings.length;
+
+    // Calculate the average rating if there are ratings
+    const averageRating =
+      totalRatings > 0
+        ? ratings.reduce((acc, rating) => acc + rating.rating, 0) / totalRatings
+        : 0;
 
     return res.status(200).json({
       success: true,
       message: "Ratings retrieved successfully.",
-      data: ratings,
+      data: {
+        averageRating: averageRating.toFixed(2), 
+        ratings,
+      },
     });
   } catch (error) {
     console.error(error);
